@@ -1,4 +1,4 @@
-# explica-visual
+# intuicion
 
 > Entiende un concepto técnico nuevo con intuición primero y detalle después: una explicación en seis pasos y un diagrama isométrico interactivo que puedes recorrer y «jugar».
 
@@ -9,7 +9,11 @@ Una skill para [Claude Code](https://claude.com/claude-code). Le das un concepto
 | **Explicación en el chat** | 1. La idea en una frase · 2. Analogía cotidiana · 3. Cómo funciona (pasos conectados con la analogía) · 4. Términos clave · 5. Cuándo se usa y cuándo no · 6. Preguntas para comprobar que lo entendiste |
 | **HTML autocontenido** | Diagrama SVG isométrico sin dependencias externas (abre desde el disco), con flujo animado, recorrido paso a paso, tour ▶, control de intensidad, tema claro/oscuro, panel para «jugar» con el concepto y glosario |
 
-Ejemplo terminado: [`ejemplos/load-balancer.html`](ejemplos/load-balancer.html) (con su explicación en [`ejemplos/load-balancer.md`](ejemplos/load-balancer.md)).
+Ejemplos terminados:
+- [`ejemplos/load-balancer.html`](ejemplos/load-balancer.html): flujo continuo de tráfico (explicación en [`ejemplos/load-balancer.md`](ejemplos/load-balancer.md)).
+- [`ejemplos/rag.html`](ejemplos/rag.html): RAG con guardrail y memoria, por turnos, con inspector del prompt en vivo.
+
+El motor ofrece primitivas neutrales (`caja`, `cilindro`, `persona`, `cola`, `plano`, `agente`, `documento`, `codigo`, `escudo`, `matriz`), estados semánticos (`foco`, `ok`, `alerta`, `error`…), un inspector sincronizado con la escena y dos modos de simulación: **continuo** (infraestructura bajo carga) y **por turnos** (algoritmos, validación, agentes de IA: la persona provoca la causa y ve el efecto).
 
 ## Estilo
 
@@ -23,17 +27,17 @@ Las reglas completas están en [`references/estilo-visual.md`](references/estilo
 ## Cómo está hecho
 
 ```
-explica-visual/
+intuicion/
 ├── SKILL.md                    # flujo, formato de la explicación y reglas del diagrama
 ├── assets/
 │   ├── base.html               # esqueleto de la página
 │   ├── motor.css               # estilos y tokens de tema
-│   └── motor.js                # motor: isometría, partículas, pasos, tour, controles
+│   └── motor.js                # motor: isometría, primitivas, partículas, pasos, tour, inspector, modos
 ├── scripts/ensamblar.py        # concepto.js + motor → un único HTML autocontenido
 ├── references/
 │   ├── motor-api.md            # API para escribir un concepto + recetas
 │   └── estilo-visual.md        # principios de diseño y lista de comprobación
-├── ejemplos/                   # load balancer completo (concepto, HTML y explicación)
+├── ejemplos/                   # load balancer (continuo) y RAG (por turnos): concepto + HTML
 └── evals/                      # casos de prueba (formato de claude plugin eval)
 ```
 
@@ -47,13 +51,13 @@ Requisitos: Python 3. Node.js es opcional (si está, el ensamblado revisa la sin
 
 ## Instalación
 
-Enlaza la carpeta en tus skills personales:
+La skill se llama `explica-intuicion`. Desde la raíz del repo, enlázala en tus skills personales con ese nombre (el nombre del enlace debe coincidir con el campo `name` de `SKILL.md`):
 
 ```bash
-ln -s ~/Desktop/PROYECTOS/explica-visual ~/.claude/skills/explica-visual
+ln -s "$(pwd)" ~/.claude/skills/explica-intuicion
 ```
 
-Luego, en Claude Code: `/explica-visual load balancer`, o simplemente «explícame qué es el sharding».
+Luego, en Claude Code: `/explica-intuicion load balancer`, o simplemente «explícame qué es el sharding».
 
 ## Probar la skill
 

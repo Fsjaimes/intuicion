@@ -1,9 +1,9 @@
 ---
-name: explica-visual
-description: Explica un concepto técnico nuevo con intuición primero y detalle después (idea en una frase, analogía cotidiana, mecanismo paso a paso, términos clave, cuándo usarlo, preguntas de comprobación) y entrega un HTML autocontenido con un diagrama SVG isométrico, animado e interactivo que se recorre paso a paso y se puede «jugar». Úsala siempre que el usuario pida entender, explicar o visualizar un concepto técnico que no conoce («qué es un load balancer», «explícame el sharding», «no entiendo cache invalidation», «lo vi en un curso de AWS y no lo pillo», «hazme un diagrama de cómo funciona una message queue»), aunque no pida un diagrama, y cuando diga /explica-visual. No la uses para documentar un proyecto propio, revisar código, ni para dudas puntuales de sintaxis que se responden en una línea.
+name: explica-intuicion
+description: Explica un concepto técnico nuevo con intuición primero y detalle después (idea en una frase, analogía cotidiana, mecanismo paso a paso, términos clave, cuándo usarlo, preguntas de comprobación) y entrega un HTML autocontenido con un diagrama SVG isométrico, animado e interactivo que se recorre paso a paso y se puede «jugar». Úsala siempre que el usuario pida entender, explicar o visualizar un concepto técnico que no conoce («qué es un load balancer», «explícame el sharding», «no entiendo cache invalidation», «lo vi en un curso de AWS y no lo pillo», «hazme un diagrama de cómo funciona una message queue», «cómo funciona RAG», «qué es una tabla hash», «no entiendo la recursión», «cómo funciona un firewall»), aunque no pida un diagrama, y cuando diga /explica-intuicion. No la uses para documentar un proyecto propio, revisar código, ni para dudas puntuales de sintaxis que se responden en una línea.
 ---
 
-# explica-visual
+# explica-intuicion
 
 Ayuda a entender un concepto técnico **la primera vez que se encuentra**. La persona tiene base técnica pero aprende mejor de forma visual: necesita primero la intuición y después el detalle. Por eso la entrega tiene dos partes que cuentan la misma historia:
 
@@ -76,12 +76,23 @@ Cada respuesta va oculta para que la persona piense antes de leerla:
 ## El diagrama
 
 ### Cómo se construye
-El HTML se arma a partir de un **motor compartido** (`assets/motor.js`, `assets/motor.css`, `assets/base.html`) más un archivo de **concepto** que escribes tú. El concepto declara la escena (nodos y enlaces en isométrico), los pasos con su narración, los controles del panel de juego y la simulación. El motor se encarga del resto: proyección isométrica, partículas que viajan, elevación al pasar el puntero con caída hacia los vecinos, control de intensidad, tema claro/oscuro, botón ▶ Recorrer (tour guiado), anterior/siguiente, teclado, táctil y glosario.
+El HTML se arma a partir de un **motor compartido** (`assets/motor.js`, `assets/motor.css`, `assets/base.html`) más un archivo de **concepto** que escribes tú. El concepto declara la escena (nodos y enlaces en isométrico), los pasos con su narración, el modo de simulación, el inspector opcional, las acciones y los controles. El motor se encarga del resto: proyección isométrica, partículas que viajan, elevación al pasar el puntero con caída hacia los vecinos, control de intensidad, tema claro/oscuro, botón ▶ Recorrer (tour guiado), anterior/siguiente, teclado, táctil y glosario.
 
-No reescribas el motor para cada concepto: escribe solo el concepto. Si de verdad falta algo en el motor (una forma nueva, un efecto), añádelo al motor de forma general para que sirva a futuros conceptos y documéntalo en `references/motor-api.md`.
+**El motor ofrece primitivas y estados semánticos neutrales; la narrativa vive en el concepto.** Las formas (`caja`, `cilindro`, `persona`, `cola`, `plano`, `agente`, `documento`, `codigo`, `escudo`, `filtro`, `matriz`) y los estados (`foco`, `ok`, `alerta`, `error`, `atenuado`…) no saben de servidores, prompts ni tablas hash: el concepto decide qué representan. No reescribas el motor para cada concepto. Si de verdad falta algo (una forma, un efecto), añádelo al motor **de forma general**, para que sirva a cualquier dominio, y documéntalo en `references/motor-api.md`.
 
-1. Lee `references/motor-api.md` (la API del concepto) y `references/estilo-visual.md` (reglas de diseño).
-2. Abre `ejemplos/load-balancer.concepto.js`: es el ejemplo completo y probado. Úsalo como referencia de estructura, no como plantilla de layout: cada concepto merece su propia escena.
+**Elige modo y composición por la familia del concepto:**
+
+| Familia | Modo | Primitivas | Inspector |
+|---|---|---|---|
+| Infraestructura, redes, sistemas distribuidos (load balancer, caché, colas, circuit breaker) | `continuo` | `caja`, `cilindro`, `cola`, `escudo` | Opcional |
+| Código, algoritmos, estructuras de datos (recursión, tablas hash, Git, compiladores, concurrencia) | `turnos` / `hibrido` | `codigo`, `matriz` | El código con la línea en ejecución |
+| Validación, seguridad, testing (auth, firewalls, fuzzing, property-based testing) | `turnos` con lotes / `hibrido` | `escudo`, `codigo`, `matriz` | Reglas o casos + entradas clicables |
+| Agentes de IA y LLM (RAG, tool use, multi-agent, memoria) | `turnos` | `agente`, `documento`, `escudo`, `matriz` | El prompt o el contexto del modelo |
+
+En modo continuo, la simulación corre sola en `tick` y se juega con parámetros. En modo por turnos, **la persona provoca la causa** (elige una entrada, pulsa una acción) y ve el efecto atravesar el sistema paso a paso; cada paso trae una `demo` que se repite con un botón.
+
+1. Lee `references/motor-api.md` (la API, los modos y recetas por familia) y `references/estilo-visual.md` (reglas de diseño).
+2. Abre el ejemplo más cercano a la familia del concepto: `ejemplos/load-balancer.concepto.js` (continuo) o `ejemplos/rag.concepto.js` (por turnos, con inspector, `agente`, `codigo`, `documento`, `matriz` y `escudo`). Úsalo como referencia de estructura, no como plantilla de layout: cada concepto merece su propia escena.
 3. Escribe `<slug>.concepto.js`.
 4. Ensambla:
    ```bash
@@ -95,14 +106,15 @@ No reescribas el motor para cada concepto: escribe solo el concepto. Si de verda
 - **La analogía y el sistema en la misma escena**: cada nodo lleva su `analogia` («El anfitrión») y la tabla «La analogía, pieza por pieza» las empareja. La metáfora se sostiene en todos los pasos.
 - **4–7 pasos**, cada uno igual a un paso de «Cómo funciona». El primero suele mostrar **el problema** (lo que pasa sin el concepto); el último suele ser **«Tu turno»**, con todo el panel de juego libre.
 - **Flujo real animado**: peticiones, datos o mensajes como puntos que viajan por los enlaces y producen efectos visibles (un servidor que se llena, una × cuando algo se rechaza, un aro para un health check).
-- **Al menos una interacción con efecto visible**: subir el tráfico, apagar un nodo, cambiar el algoritmo, invalidar una clave. Que se note la diferencia en segundos, con contadores que la cuantifiquen.
+- **Al menos una interacción con efecto visible**: subir el tráfico, apagar un nodo, cambiar el algoritmo, lanzar una entrada concreta, quitar una protección y repetir. Que se note la diferencia en segundos, con contadores que la cuantifiquen.
+- **Si hay inspector**, cada evento de la escena se refleja en él en el mismo instante (línea resaltada, valor que cambia, evento en la traza).
 - **Etiquetas cortas** (1–3 palabras), mucho espacio, nada recargado. Lo largo va en la narración del paso o en la descripción del nodo (se ve al tocarlo).
 
 ### Verificar
 Antes de entregar:
 1. El ensamblado no reporta errores de sintaxis.
 2. Abre el HTML en un navegador (si hay herramientas de navegador, úsalas; si no, al menos `open <archivo>.html` en macOS) y revisa la consola: cero errores.
-3. Recorre todos los pasos y comprueba que lo que se ve coincide con el texto de cada paso. Si la pestaña está en segundo plano, la animación se frena: usa `EXPLICA.simular(10)` desde la consola para avanzar 10 s simulados y luego lee el estado (subetiquetas, contadores).
-4. Prueba cada control del panel de juego y confirma que cambia algo visible y que los contadores reaccionan como dice la narración.
-5. Prueba a 375 px de ancho: sin scroll horizontal y etiquetas dentro del diagrama.
+3. Recorre todos los pasos y comprueba que lo que se ve coincide con el texto de cada paso. Si la pestaña está en segundo plano, la animación se frena: usa `await EXPLICA.simular(10)` desde la consola para avanzar 10 s simulados (también las secuencias por turnos) y luego lee el estado (subetiquetas, contadores, líneas del inspector).
+4. Prueba cada control, acción y entrada, y confirma que cambia algo visible y que los contadores y el inspector reaccionan como dice la narración. En modo por turnos, `EXPLICA.elegirEntrada('id')` lanza una entrada desde la consola.
+5. Prueba a 375 px de ancho: sin scroll horizontal, etiquetas dentro del diagrama y sin superponerse; el inspector pasa debajo del diagrama.
 6. Relee la explicación y el diagrama juntos: mismos pasos, mismos títulos, mismos nombres en la analogía.
