@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: message-queue-contexto-entrevista
+expected_outcome: |
+  Uses the interview context to include the typical trade-off (at-least-once delivery, ordering, or added latency) in section 5; builds the HTML with producers, a queue node and consumers, where turning off a consumer makes the queue grow without losing messages.

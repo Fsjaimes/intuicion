@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: no-aplica-documentar-proyecto
+expected_outcome: |
+  The skill should not be used: the user asks to document their own project, which belongs to another workflow (e.g. sodeker-docs). No interactive concept diagram is generated.

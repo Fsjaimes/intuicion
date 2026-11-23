@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: rate-limiter-con-metafora
+expected_outcome: |
+  Since the user already gave the metaphor, the skill skips the metaphor proposal, writes the six sections in order (idea, analogy, how it works, key terms, when to use, check questions) in Spanish keeping industry terms in English with translation on first use, and builds a self-contained HTML via scripts/ensamblar.py whose steps match the 'how it works' steps; the diagram includes a token bucket with tokens refilling and rejected requests counted.

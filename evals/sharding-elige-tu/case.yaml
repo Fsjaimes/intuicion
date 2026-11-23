@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: sharding-elige-tu
+expected_outcome: |
+  The skill picks a metaphor itself, explains in one line any prerequisite concept (e.g. what a shard key or index is) before continuing, writes the six sections, and builds an HTML with a router distributing keys to several shards, with an interaction such as switching range vs hash or adding a shard.

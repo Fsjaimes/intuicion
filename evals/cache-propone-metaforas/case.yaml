@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: cache-propone-metaforas
+expected_outcome: |
+  Before writing anything, the response proposes 2-3 one-line visual metaphors for cache and cache invalidation, marks one as recommended, and waits for the user to choose. It does not build the HTML yet.
