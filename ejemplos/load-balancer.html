@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Load balancer · explica-visual</title>
+<title>Load balancer · explica-intuicion</title>
 <style>
-/* explica-visual · estilos del motor
+/* explica-intuicion · estilos del motor
    Línea fina (hairline), casi monocromo, un solo acento, fondo crema.
    Todo color sale de los tokens de :root para que el tema oscuro funcione. */
 
@@ -21,6 +21,10 @@
   --acento: #c8553d;
   --acento-suave: rgba(200, 85, 61, 0.16);
   --sombra: rgba(42, 38, 32, 0.18);
+  /* Único color además del acento: el estado «ok». Úsalo solo para resultados correctos. */
+  --ok: #5c7d58;
+  --ok-suave: rgba(92, 125, 88, 0.18);
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --fs: 13;
   color-scheme: light;
 }
@@ -29,6 +33,7 @@
     --bg: #1b1916; --panel: #211f1b; --ink: #ece3d6; --ink-2: #a99d8e; --line: #3a352e;
     --cara-sup: #2c2924; --cara-izq: #24221e; --cara-der: #1f1d1a;
     --acento: #e3805f; --acento-suave: rgba(227, 128, 95, 0.2); --sombra: rgba(0, 0, 0, 0.5);
+    --ok: #93b98d; --ok-suave: rgba(147, 185, 141, 0.2);
     color-scheme: dark;
   }
 }
@@ -36,6 +41,7 @@
   --bg: #1b1916; --panel: #211f1b; --ink: #ece3d6; --ink-2: #a99d8e; --line: #3a352e;
   --cara-sup: #2c2924; --cara-izq: #24221e; --cara-der: #1f1d1a;
   --acento: #e3805f; --acento-suave: rgba(227, 128, 95, 0.2); --sombra: rgba(0, 0, 0, 0.5);
+    --ok: #93b98d; --ok-suave: rgba(147, 185, 141, 0.2);
   color-scheme: dark;
 }
 
@@ -148,6 +154,91 @@ input[type="range"] { accent-color: var(--acento); width: 120px; }
 .escena .globo rect { fill: var(--bg); stroke: var(--ink); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .escena .globo text { font-size: calc(var(--fs) * 0.92px); }
 
+/* Estados semánticos neutrales (api.estado) */
+.escena .enlace.tenue { opacity: .35; }
+.escena .nodo.e-foco .trazo { stroke: var(--acento); }
+.escena .nodo.e-ok .trazo { stroke: var(--ok); }
+.escena .nodo.e-ok .c-sup { fill: var(--ok-suave); }
+.escena .nodo.e-error .trazo { stroke: var(--acento); stroke-width: 1.6; }
+.escena .nodo.e-error .c-izq, .escena .nodo.e-error .c-der { fill: var(--acento-suave); }
+.escena .nodo.e-atenuado .forma { opacity: .35; }
+.escena .nodo.destello-ok .trazo { stroke: var(--ok); stroke-width: 2.4; }
+.escena .nodo.destello-error .trazo { stroke: var(--acento); stroke-width: 2.4; }
+.escena .nodo.destello-foco .trazo { stroke: var(--acento); stroke-width: 2; }
+
+/* agente */
+.escena .halo { fill: none; stroke: var(--ink-2); stroke-width: 1.2; vector-effect: non-scaling-stroke; stroke-dasharray: 2 4; opacity: .8; }
+.escena .nodo.e-activo .halo { stroke: var(--acento); stroke-dasharray: 6 4; opacity: 1; animation: orbita 1.1s linear infinite; }
+.escena .nodo.e-activo .nucleo, .escena .nodo.e-saturado .nucleo { stroke: var(--acento); }
+.escena .nodo.e-alerta .halo, .escena .nodo.e-saturado .halo { stroke: var(--acento); stroke-dasharray: none; stroke-width: 1.8; opacity: 1; }
+.escena .nodo.e-saturado .nucleo { fill: var(--acento-suave); }
+.escena .nodo.e-ok .halo { stroke: var(--ok); stroke-dasharray: none; opacity: 1; }
+@keyframes orbita { to { stroke-dashoffset: -20; } }
+
+/* documento / codigo */
+.escena .renglon { stroke: var(--ink-2); stroke-width: 1.6; stroke-linecap: round; vector-effect: non-scaling-stroke; fill: none; transition: stroke .2s; }
+.escena .renglon.titulo { stroke: var(--ink); stroke-width: 2.2; }
+.escena .renglon.s-foco { stroke: var(--acento); stroke-width: 2.6; }
+.escena .renglon.s-ok { stroke: var(--ok); stroke-width: 2.4; }
+.escena .renglon.s-alerta { stroke: var(--acento); stroke-dasharray: 3 3; }
+.escena .renglon.s-error { stroke: var(--acento); stroke-width: 2.6; }
+.escena .renglon.s-atenuado { opacity: .3; }
+
+/* escudo / filtro */
+.escena .panel { transition: opacity .25s, fill .25s; }
+.escena .rejilla polyline { stroke: var(--ink-2); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.escena .rejilla { display: none; }
+.escena .nodo.e-filtrando .rejilla { display: inline; }
+.escena .nodo.e-abierto .panel { fill: none; stroke-dasharray: 3 4; opacity: .5; }
+.escena .nodo.e-cerrado .panel { fill: var(--acento-suave); stroke: var(--acento); }
+
+/* matriz */
+.escena .celda .c-sup { transition: fill .2s; }
+.escena .celda.s-activa .c-sup { fill: var(--ink-2); fill-opacity: .3; }
+.escena .celda.s-foco .c-sup { fill: var(--acento-suave); }
+.escena .celda.s-foco .trazo { stroke: var(--acento); }
+.escena .celda.s-ok .c-sup { fill: var(--ok); fill-opacity: .55; }
+.escena .celda.s-alerta .c-sup { fill: var(--acento); fill-opacity: .3; }
+.escena .celda.s-error .c-sup { fill: var(--acento); fill-opacity: .75; }
+.escena .celda.s-atenuado { opacity: .35; }
+.escena .celda-texto { font-size: calc(var(--fs) * 0.6px); fill: var(--ink); pointer-events: none; }
+
+/* Laboratorio: figura + inspector */
+.laboratorio { display: grid; gap: 16px; }
+.laboratorio.con-inspector { grid-template-columns: minmax(0, 1fr) minmax(260px, 330px); align-items: start; }
+.acciones-escena { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.acciones-escena .btn { min-height: 38px; font-size: 13px; }
+.inspector {
+  border: 1px solid var(--line); border-radius: 16px; background: var(--panel);
+  padding: 16px; font-size: 14px; display: flex; flex-direction: column; gap: 16px; min-width: 0;
+}
+.inspector h2 { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); font-weight: 500; margin: 0; }
+.inspector h3 { font-size: 12px; color: var(--ink-2); font-weight: 500; margin: 0 0 8px; }
+.insp-sub { margin: 4px 0 0; color: var(--ink-2); font-size: 13px; }
+.entradas { display: flex; flex-direction: column; gap: 6px; }
+.entradas .entrada { justify-content: flex-start; text-align: left; border-radius: 10px; min-height: 36px; padding: 6px 12px; font-size: 13px; line-height: 1.35; }
+.entradas .entrada[aria-pressed="true"] { border-color: var(--acento); background: var(--acento-suave); }
+.lineas {
+  list-style: none; margin: 0; padding: 8px 0; font-family: var(--mono); font-size: 12.5px; line-height: 1.55;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--bg); overflow-wrap: anywhere;
+}
+.linea { display: grid; grid-template-columns: 2.4em minmax(0, 1fr); column-gap: 8px; padding: 2px 10px 2px 0; border-left: 2px solid transparent; transition: background .2s, opacity .2s; }
+.linea .num { color: var(--ink-2); text-align: right; user-select: none; }
+.linea code { font: inherit; white-space: pre-wrap; }
+.linea .nota { grid-column: 2; color: var(--ink-2); font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif; font-size: 11.5px; }
+.linea.s-foco { background: var(--acento-suave); border-left-color: var(--acento); }
+.linea.s-ok { background: var(--ok-suave); border-left-color: var(--ok); }
+.linea.s-alerta { border-left-color: var(--acento); border-left-style: dashed; }
+.linea.s-error { background: var(--acento-suave); border-left-color: var(--acento); color: var(--acento); }
+.linea.s-atenuado { opacity: .4; }
+.traza { list-style: none; margin: 0; padding: 0; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+.traza li { padding-left: 14px; position: relative; color: var(--ink-2); transition: color .4s; }
+.traza li::before { content: ""; position: absolute; left: 0; top: .55em; width: 6px; height: 6px; border-radius: 50%; background: var(--ink-2); }
+.traza li:last-child { color: var(--ink); font-weight: 500; }
+.traza li.s-ok::before { background: var(--ok); }
+.traza li.s-error::before, .traza li.s-alerta::before { background: var(--acento); }
+.laboratorio.ocupado .entradas .entrada:not([aria-pressed="true"]) { opacity: .55; }
+
 /* Narración del paso */
 .narracion { display: grid; grid-template-columns: 1fr auto; gap: 20px 32px; align-items: start; margin-top: 20px; }
 .narracion h2 { font-size: 22px; letter-spacing: -0.01em; margin: 0 0 6px; font-weight: 600; }
@@ -200,6 +291,9 @@ input[type="range"] { accent-color: var(--acento); width: 120px; }
 
 .pie { margin-top: 40px; font-size: 12px; color: var(--ink-2); }
 
+@media (max-width: 900px) {
+  .laboratorio.con-inspector { grid-template-columns: 1fr; }
+}
 @media (max-width: 720px) {
   .app { padding-top: 24px; }
   .narracion { grid-template-columns: 1fr; }
@@ -209,6 +303,7 @@ input[type="range"] { accent-color: var(--acento); width: 120px; }
 }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
+  .escena .halo { animation: none !important; }
 }
 
 </style>
@@ -217,7 +312,7 @@ input[type="range"] { accent-color: var(--acento); width: 120px; }
 <div class="app">
   <header class="cabecera">
     <div>
-      <p class="kicker" id="kicker">explica-visual</p>
+      <p class="kicker" id="kicker">explica-intuicion</p>
       <h1 id="titulo"></h1>
       <p class="frase" id="frase"></p>
       <p class="analogia-linea" id="analogia-linea"></p>
@@ -230,12 +325,31 @@ input[type="range"] { accent-color: var(--acento); width: 120px; }
     </div>
   </header>
 
-  <section class="figura" aria-label="Diagrama interactivo">
-    <svg class="escena" id="escena" role="img" aria-labelledby="titulo"></svg>
-    <div class="insignia" id="insignia"></div>
-    <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
-    <div class="tarjeta" id="tarjeta" role="status" aria-live="polite"><p class="vacia">Toca o pasa el puntero sobre una pieza para ver qué es.</p></div>
-  </section>
+  <div class="laboratorio" id="laboratorio">
+    <section class="figura" aria-label="Diagrama interactivo">
+      <svg class="escena" id="escena" role="img" aria-labelledby="titulo"></svg>
+      <div class="insignia" id="insignia"></div>
+      <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+      <div class="acciones-escena" id="acciones-escena" role="group" aria-label="Acciones" hidden></div>
+      <div class="tarjeta" id="tarjeta" role="status" aria-live="polite"><p class="vacia">Toca o pasa el puntero sobre una pieza para ver qué es.</p></div>
+    </section>
+
+    <aside class="inspector" id="inspector" aria-label="Inspector" hidden>
+      <div class="insp-cabecera">
+        <h2 id="insp-titulo">Inspector</h2>
+        <p class="insp-sub" id="insp-sub"></p>
+      </div>
+      <div class="insp-bloque" id="insp-entradas-bloque" hidden>
+        <h3>Prueba con</h3>
+        <div class="entradas" id="entradas" role="group" aria-label="Entradas de ejemplo"></div>
+      </div>
+      <ol class="lineas" id="lineas" hidden></ol>
+      <div class="insp-bloque" id="insp-traza-bloque" hidden>
+        <h3>Lo que acaba de pasar</h3>
+        <ol class="traza" id="traza" aria-live="polite"></ol>
+      </div>
+    </aside>
+  </div>
 
   <section class="narracion">
     <div aria-live="polite">
@@ -538,10 +652,12 @@ window.CONCEPTO = (() => {
 
 </script>
 <script>
-/* explica-visual · motor
+/* explica-intuicion · motor
    Lee window.CONCEPTO (ver references/motor-api.md) y monta:
-   escena isométrica, partículas, pasos con narración, tour automático,
-   intensidad del puntero, tema claro/oscuro, panel de juego y glosario. */
+   escena isométrica con primitivas neutrales (caja, cilindro, persona, cola, plano,
+   agente, documento/codigo, escudo/filtro, matriz), estados semánticos, partículas,
+   pasos con narración, tour automático, modos continuo / turnos / híbrido, inspector
+   sincronizado, intensidad del puntero, tema claro/oscuro, panel de juego y glosario. */
 (() => {
   'use strict';
   const C = window.CONCEPTO;
@@ -681,7 +797,113 @@ window.CONCEPTO = (() => {
     n.h = 0; n.radioBase = (w + d) / 4; n.medidor = () => {};
   }
 
-  const FORMAS = { caja, cilindro, persona, cola, plano };
+  // Prisma isométrico genérico (base en x, y; altura de z0 a z0 + h). Devuelve sus caras.
+  function prisma(g, x, y, w, d, h, z0, extra) {
+    const hw = w / 2, hd = d / 2, z1 = (z0 || 0) + h, z = z0 || 0;
+    const a = (dx, dy, zz) => iso(x + dx, y + dy, zz);
+    const cls = (c) => 'trazo ' + c + (extra ? ' ' + extra : '');
+    return {
+      der: el('polygon', { class: cls('c-der'), points: pts([a(hw, -hd, z), a(hw, hd, z), a(hw, hd, z1), a(hw, -hd, z1)]) }, g),
+      izq: el('polygon', { class: cls('c-izq'), points: pts([a(-hw, hd, z), a(hw, hd, z), a(hw, hd, z1), a(-hw, hd, z1)]) }, g),
+      sup: el('polygon', { class: cls('c-sup'), points: pts([a(-hw, -hd, z1), a(hw, -hd, z1), a(hw, hd, z1), a(-hw, hd, z1)]) }, g),
+    };
+  }
+
+  // agente: pedestal + núcleo flotante con un halo en órbita (estado: inactivo, activo, alerta, saturado).
+  // El medidor llena el núcleo (contexto usado, carga, confianza…).
+  function agente(n, g) {
+    const r = n.def.r || 24, hPed = n.def.h ?? 10;
+    const rx = Math.SQRT2 * r * COS, ry = Math.SQRT2 * r * SIN;
+    const [bx, by] = iso(n.x, n.y, 0), ty = by - hPed;
+    el('path', { class: 'trazo c-izq', d: `M${bx - rx},${ty} L${bx - rx},${by} A${rx},${ry} 0 0 0 ${bx + rx},${by} L${bx + rx},${ty} A${rx},${ry} 0 0 1 ${bx - rx},${ty} Z` }, g);
+    el('ellipse', { class: 'trazo c-sup', cx: bx, cy: ty, rx, ry }, g);
+    const rc = r * 0.66, cy = ty - rc - 12;
+    const hx = rx * 1.12, hy = ry * 1.12;
+    el('path', { class: 'halo', d: `M${bx - hx},${cy} A${hx},${hy} 0 0 1 ${bx + hx},${cy}` }, g);
+    el('circle', { class: 'trazo c-sup nucleo', cx: bx, cy, r: rc }, g);
+    const idClip = 'clip-' + String(n.def.id).replace(/[^\w-]/g, '_');
+    const clip = el('clipPath', { id: idClip }, g);
+    el('circle', { cx: bx, cy, r: rc - 0.5 }, clip);
+    const med = el('rect', { class: 'medidor', x: bx - rc, width: rc * 2, y: cy + rc, height: 0, 'clip-path': `url(#${idClip})` }, g);
+    el('circle', { class: 'detalle', cx: bx, cy, r: rc * 0.34 }, g);
+    el('path', { class: 'halo', d: `M${bx - hx},${cy} A${hx},${hy} 0 0 0 ${bx + hx},${cy}` }, g);
+    n.h = by - (cy - rc); n.radioBase = ry;
+    n.estadoInicial = 'inactivo';
+    n.medidor = (f) => {
+      const hh = 2 * rc * Math.max(0, Math.min(1, f));
+      med.setAttribute('y', cy + rc - hh); med.setAttribute('height', hh);
+    };
+  }
+
+  // documento / codigo: tarjeta de pie con renglones en la cara frontal.
+  // Cada renglón cambia de estado con api.renglon(id, i, estado).
+  function documento(n, g) {
+    const esCodigo = n.def.tipo === 'codigo';
+    const w = n.def.w || 48, d = n.def.d || 8, h = n.def.h ?? 62, hw = w / 2, hd = d / 2;
+    const { x, y } = n;
+    const a = (dx, dy, z) => iso(x + dx, y + dy, z);
+    const caras = prisma(g, x, y, w, d, h, 0);
+    const med = el('polygon', { class: 'medidor', points: '' }, g);
+    g.insertBefore(med, caras.sup);
+    const k = n.def.lineas || 5;
+    const margen = 7, paso_ = Math.min(10, (h - 16) / k);
+    const sangrias = esCodigo ? [0, 1, 2, 2, 1, 2, 1, 0, 1, 0] : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const largos = esCodigo ? [0.7, 0.8, 0.55, 0.7, 0.45, 0.6, 0.5, 0.3, 0.6, 0.4] : [0.55, 0.95, 0.85, 0.92, 0.6, 0.9, 0.8, 0.7, 0.9, 0.5];
+    n.renglones = [];
+    for (let i = 0; i < k; i++) {
+      const z = h - 10 - i * paso_;
+      const s = sangrias[i % sangrias.length] * 5;
+      const L = (w - margen * 2 - s) * largos[i % largos.length];
+      const ini = -hw + margen + s;
+      const clase = 'renglon' + (!esCodigo && i === 0 ? ' titulo' : '');
+      n.renglones.push(el('polyline', { class: clase, points: pts([a(ini, hd, z), a(ini + L, hd, z)]) }, g));
+    }
+    n.h = h; n.radioBase = (w + d) / 4;
+    n.medidor = (f) => {
+      const z = h * Math.max(0, Math.min(1, f));
+      med.setAttribute('points', z <= 0.01 ? '' : pts([a(-hw, hd, 0), a(hw, hd, 0), a(hw, hd, z), a(-hw, hd, z)]));
+    };
+  }
+
+  // escudo / filtro: compuerta entre dos postes (estado: abierto, filtrando, cerrado).
+  function escudo(n, g) {
+    const w = n.def.w || 10, d = n.def.d || 64, h = n.def.h ?? 54, hd = d / 2;
+    const { x, y } = n;
+    prisma(g, x, y - hd + w / 2, w, w, h + 6, 0);
+    const panel = prisma(g, x, y, w * 0.5, d - w * 2, h - 8, 6, 'panel');
+    const a = (dx, dy, z) => iso(x + dx, y + dy, z);
+    const rej = el('g', { class: 'rejilla' }, g);
+    const tramos = 5, largo = d - w * 2;
+    for (let i = 1; i < tramos; i++) {
+      const yy = -largo / 2 + largo * i / tramos;
+      el('polyline', { points: pts([a(w * 0.25, yy, 8), a(w * 0.25, yy, h - 4)]) }, rej);
+    }
+    void panel;
+    prisma(g, x, y + hd - w / 2, w, w, h + 6, 0);
+    n.h = h + 6; n.radioBase = (w + d) / 4;
+    n.estadoInicial = n.def.tipo === 'filtro' ? 'filtrando' : 'abierto';
+    n.medidor = () => {};
+  }
+
+  // matriz: cuadrícula isométrica de celdas (filas × columnas). api.celda(id, f, c, estado).
+  function matriz(n, g) {
+    const F = n.def.filas || 3, K = n.def.columnas || 4, t = n.def.celda || 20, p = t + (n.def.separacion ?? 4), h = n.def.h ?? 5;
+    const orden = [];
+    for (let f = 0; f < F; f++) for (let c = 0; c < K; c++) orden.push([f, c]);
+    orden.sort((A, B) => (A[0] + A[1]) - (B[0] + B[1]));
+    n.celdas = Array.from({ length: F }, () => []);
+    for (const [f, c] of orden) {
+      const x = n.x + (c - (K - 1) / 2) * p, y = n.y + (f - (F - 1) / 2) * p;
+      const cg = el('g', { class: 'celda s-vacia' }, g);
+      prisma(cg, x, y, t, t, h, 0);
+      const ancla = iso(x, y, h);
+      n.celdas[f][c] = { g: cg, ancla, texto: null };
+    }
+    n.h = h; n.radioBase = (K + F) * p / 4; n.anchoU = (K + F) * p * COS;
+    n.medidor = () => {};
+  }
+
+  const FORMAS = { caja, cilindro, persona, cola, plano, agente, documento, codigo: documento, escudo, filtro: escudo, matriz };
 
   // ---- Construcción de la escena ------------------------------------------
   function construir() {
@@ -717,6 +939,7 @@ window.CONCEPTO = (() => {
       g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); seleccionar(def.id, true); } });
       nodos[def.id] = n;
       n.medidor(0);
+      if (def.estado || n.estadoInicial) api.estado(def.id, def.estado || n.estadoInicial);
     }
 
     for (const def of C.escena.enlaces || []) {
@@ -743,7 +966,8 @@ window.CONCEPTO = (() => {
     if (def.tipo === 'plano') { y = by - n.radioBase - 10; }
     const t = el('text', { x, y, 'text-anchor': anchor }, g);
     t.textContent = def.etiqueta || '';
-    n.subEl = el('text', { x, y: y + 16, 'text-anchor': anchor, class: 'sub' }, g);
+    // dy en em: la subetiqueta se separa en proporción al tamaño del texto (que crece en móvil).
+    n.subEl = el('text', { x, y, dy: '1.4em', 'text-anchor': anchor, class: 'sub' }, g);
     n.subEl.textContent = def.sub || '';
   }
 
@@ -764,7 +988,8 @@ window.CONCEPTO = (() => {
   }
   function reescalarTexto() {
     const escala = svg.clientWidth / vb.w || 1;
-    const fs = Math.min(22, Math.max(13, 12 / escala));
+    // En pantallas estrechas el texto crece más (hasta ~10 px reales) para seguir siendo legible.
+    const fs = Math.min(escala < 0.5 ? 27 : 22, Math.max(13, 12 / escala));
     svg.style.setProperty('--fs', fs.toFixed(1));
   }
 
@@ -787,8 +1012,9 @@ window.CONCEPTO = (() => {
     nodo: (id) => nodos[id],
     visible: (id) => nodos[id] && !nodos[id].g.classList.contains('oculto'),
 
+    // ruta: ids de nodo, 'matriz:f,c' para una celda, { nodo, celda: [f, c] } o puntos [x, y].
     enviar(ruta, estilo, alLlegar, opciones) {
-      const ptsRuta = ruta.map((id) => nodos[id]?.ancla).filter(Boolean);
+      const ptsRuta = ruta.map(punto).filter(Boolean);
       if (ptsRuta.length < 2) return null;
       const est = typeof estilo === 'string' ? (ESTILOS[estilo] || ESTILOS.peticion) : { ...ESTILOS.peticion, ...estilo };
       const jit = (Math.random() - 0.5) * 6;
@@ -807,16 +1033,46 @@ window.CONCEPTO = (() => {
     limpiarParticulas() { particulas.splice(0).forEach((p) => p.g.remove()); },
 
     medidor(id, f) { nodos[id]?.medidor(f); },
+    // Estados neutrales: normal, foco, ok, alerta, error, atenuado, apagado;
+    // agente: inactivo, activo, saturado; escudo: abierto, filtrando, cerrado.
     estado(id, e) {
       const n = nodos[id]; if (!n) return;
+      for (const c of [...n.g.classList]) if (c.startsWith('e-')) n.g.classList.remove(c);
+      if (e && e !== 'normal') n.g.classList.add('e-' + e);
       n.g.classList.toggle('apagado', e === 'apagado');
       n.g.classList.toggle('alerta', e === 'alerta');
+      n.estado = e || 'normal';
+    },
+    estadoDe: (id) => nodos[id]?.estado || 'normal',
+    destello(id, tipo) {
+      const n = nodos[id]; if (!n) return;
+      const clase = 'destello-' + (tipo || 'foco');
+      n.g.classList.add(clase);
+      efectos.push({ t: 0, dur: 0.7, tipo: 'clase', nodo: n, clase });
+    },
+    celda(id, f, c, estado) {
+      const cel = nodos[id]?.celdas?.[f]?.[c]; if (!cel) return;
+      cel.g.setAttribute('class', 'celda s-' + (estado || 'vacia'));
+      cel.estado = estado || 'vacia';
+    },
+    celdas(id, estado) { (nodos[id]?.celdas || []).forEach((fila, f) => fila.forEach((_, c) => api.celda(id, f, c, estado))); },
+    estadoCelda: (id, f, c) => nodos[id]?.celdas?.[f]?.[c]?.estado || 'vacia',
+    celdaTexto(id, f, c, texto) {
+      const cel = nodos[id]?.celdas?.[f]?.[c]; if (!cel) return;
+      if (!cel.texto) cel.texto = el('text', { x: cel.ancla[0], y: cel.ancla[1] + 3, 'text-anchor': 'middle', class: 'celda-texto' }, cel.g);
+      cel.texto.textContent = texto ?? '';
+    },
+    renglon(id, i, estado) {
+      const r = nodos[id]?.renglones?.[i]; if (!r) return;
+      const base = r.classList.contains('titulo') ? 'renglon titulo' : 'renglon';
+      r.setAttribute('class', base + (estado && estado !== 'normal' ? ' s-' + estado : ''));
     },
     sub(id, texto) { const n = nodos[id]; if (n?.subEl && n.subEl.textContent !== texto) n.subEl.textContent = texto; },
     enlace(id, estado) {
       const e = enlaces[id]; if (!e) return;
       e.path.classList.toggle('roto', estado === 'roto');
       e.path.classList.toggle('activo', estado === 'activo');
+      e.path.classList.toggle('tenue', estado === 'tenue');
     },
 
     descartar(donde) {
@@ -861,6 +1117,47 @@ window.CONCEPTO = (() => {
   };
   window.EXPLICA = api; // útil para depurar desde la consola
 
+  function punto(ref) {
+    if (Array.isArray(ref)) return ref;
+    if (ref && typeof ref === 'object') return ref.celda ? nodos[ref.nodo]?.celdas?.[ref.celda[0]]?.[ref.celda[1]]?.ancla : nodos[ref.nodo]?.ancla;
+    if (typeof ref === 'string' && ref.includes(':')) {
+      const [id, rc] = ref.split(':'); const [f, c] = rc.split(',').map(Number);
+      return nodos[id]?.celdas?.[f]?.[c]?.ancla;
+    }
+    return nodos[ref]?.ancla;
+  }
+
+  // ---- Modo por turnos: secuencias con await ------------------------------
+  // Cada cambio de paso abre una «generación» nueva: las secuencias de la anterior
+  // se quedan sin continuar en silencio, así no pisan el paso actual.
+  let generacion = 0, ejecutando = 0;
+  const modo = C.modo || 'continuo';
+  api.modo = modo;
+  Object.defineProperty(api, 'ocupado', { get: () => ejecutando > 0 });
+  api.esperar = (seg) => {
+    const g0 = generacion;
+    return new Promise((res) => { const t = { resta: seg, fn: () => { if (g0 === generacion) res(); }, ambito: 'global' }; temporizadores.push(t); });
+  };
+  api.viajar = (ruta, estilo, opciones) => {
+    const g0 = generacion;
+    return new Promise((res) => {
+      const p = api.enviar(ruta, estilo, (pp) => { if (g0 === generacion) res(pp); }, opciones);
+      if (!p) res(null);
+    });
+  };
+  // Ejecuta una acción del concepto. Si devuelve una promesa, la escena queda «ocupada» hasta que termine.
+  function ejecutar(fn, ...args) {
+    if (!fn) return;
+    const g0 = generacion;
+    let r;
+    try { r = fn(...args, api); } catch (e) { console.error(e); return; }
+    if (r && typeof r.then === 'function') {
+      ejecutando++; pintarOcupado();
+      r.catch((e) => console.error(e)).finally(() => { if (g0 === generacion) { ejecutando = Math.max(0, ejecutando - 1); pintarOcupado(); } });
+    }
+  }
+  api.ejecutar = (fn) => ejecutar(fn);
+
   function moverParticula(p) {
     let d = p.d, i = 0;
     while (i < p.largos.length - 1 && d > p.largos[i]) { d -= p.largos[i]; i++; }
@@ -874,6 +1171,8 @@ window.CONCEPTO = (() => {
     paso = Math.max(0, Math.min(C.pasos.length - 1, i));
     const P = C.pasos[paso];
     tiempoPaso = 0; tourIdx = 0; tourT = 0;
+    generacion++; ejecutando = 0;
+    if (modo !== 'continuo') api.limpiarParticulas();
     for (let k = temporizadores.length - 1; k >= 0; k--) if (temporizadores[k].ambito === 'paso') temporizadores.splice(k, 1);
 
     const num = paso + 1;
@@ -897,9 +1196,132 @@ window.CONCEPTO = (() => {
     [...$('puntos').children].forEach((b, k) => { if (k === paso) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); });
 
     ambito = 'paso';
-    try { P.al_entrar?.(api); } finally { ambito = 'global'; }
+    try {
+      P.al_entrar?.(api);
+      // La demostración del paso arranca sola (salvo demo_auto: false) y se puede repetir con su botón.
+      if (P.demo && P.demo_auto !== false) api.despues(P.demo_retraso ?? 0.6, () => { if (!ejecutando) ejecutar(P.demo); });
+    } finally { ambito = 'global'; }
+    pintarAcciones();
+    pintarEntradas();
+    pintarOcupado();
     if (!desdeTour) cerrarTarjeta();
   }
+
+  // ---- Barra de acciones (modo por turnos o híbrido) ---------------------
+  let botonesAccion = [];
+  function pintarAcciones() {
+    const cont = $('acciones-escena');
+    const P = C.pasos[paso];
+    const lista = [];
+    if (P.demo) lista.push({ texto: P.demo_texto || '▶ Ver este paso', fn: P.demo, principal: true });
+    lista.push(...(P.acciones || []), ...(C.acciones || []));
+    cont.innerHTML = ''; botonesAccion = [];
+    for (const a of lista) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'btn' + (a.principal ? ' primario' : '');
+      b.textContent = a.texto;
+      if (a.descripcion) b.title = a.descripcion;
+      b.addEventListener('click', () => { if (a.esperar !== false && ejecutando) return; alternarPlay(false); ejecutar(a.fn); });
+      cont.appendChild(b); botonesAccion.push([a, b]);
+    }
+    cont.hidden = !lista.length;
+  }
+  function pintarOcupado() {
+    for (const [a, b] of botonesAccion) b.disabled = a.esperar !== false && ejecutando > 0;
+    for (const [, b] of botonesEntrada) b.disabled = ejecutando > 0;
+    $('laboratorio').classList.toggle('ocupado', ejecutando > 0);
+  }
+
+  // ---- Inspector / laboratorio en vivo ------------------------------------
+  const I = C.inspector;
+  const lineas = {};          // id → { li, code, texto, nota }
+  let botonesEntrada = [], entradaActual = null;
+  function construirInspector() {
+    if (!I) return;
+    $('inspector').hidden = false;
+    $('laboratorio').classList.add('con-inspector');
+    $('insp-titulo').textContent = I.titulo || 'Inspector';
+    $('insp-sub').textContent = I.subtitulo || '';
+    $('insp-sub').hidden = !I.subtitulo;
+    if ((I.lineas || []).length) {
+      const ol = $('lineas'); ol.hidden = false;
+      if (I.vista) ol.dataset.vista = I.vista;
+      I.lineas.forEach((L, k) => {
+        const li = document.createElement('li');
+        li.className = 'linea'; li.dataset.id = L.id;
+        li.innerHTML = '<span class="num"></span><code></code>';
+        li.querySelector('.num').textContent = L.numero ?? (k + 1);
+        const code = li.querySelector('code');
+        code.textContent = L.texto; code.style.paddingLeft = (L.sangria || 0) * 2 + 'ch';
+        let nota = null;
+        if (L.nota) { nota = document.createElement('span'); nota.className = 'nota'; nota.textContent = L.nota; li.appendChild(nota); }
+        ol.appendChild(li);
+        lineas[L.id] = { li, code, texto: L.texto, nota, notaTexto: L.nota || '' };
+      });
+    }
+    if ((I.entradas || []).length) {
+      $('insp-entradas-bloque').hidden = false;
+      const cont = $('entradas');
+      for (const e of I.entradas) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'btn entrada'; b.dataset.id = e.id;
+        b.textContent = e.texto;
+        if (e.detalle) b.title = e.detalle;
+        b.setAttribute('aria-pressed', 'false');
+        b.addEventListener('click', () => {
+          if (ejecutando) return;
+          alternarPlay(false);
+          entradaActual = e.id;
+          botonesEntrada.forEach(([x, bb]) => bb.setAttribute('aria-pressed', String(x.id === e.id)));
+          ejecutar(e.fn || I.al_elegir, e);
+        });
+        cont.appendChild(b); botonesEntrada.push([e, b]);
+      }
+    }
+    if (I.traza !== false) $('insp-traza-bloque').hidden = false;
+  }
+  function pintarEntradas() {
+    const filtro = C.pasos[paso].entradas;
+    for (const [e, b] of botonesEntrada) b.hidden = !!filtro && !filtro.includes(e.id);
+  }
+
+  Object.defineProperty(api, 'entradaActual', { get: () => entradaActual });
+  api.entrada = (id) => (I?.entradas || []).find((e) => e.id === id);
+  api.elegirEntrada = (id) => {
+    const par = botonesEntrada.find(([e]) => e.id === id); if (!par) return;
+    entradaActual = id;
+    botonesEntrada.forEach(([x, bb]) => bb.setAttribute('aria-pressed', String(x.id === id)));
+    ejecutar(par[0].fn || I.al_elegir, par[0]);
+  };
+  api.resaltarLinea = (id, estado) => {
+    const L = lineas[id]; if (!L) return;
+    L.li.className = 'linea' + (estado && estado !== 'normal' ? ' s-' + estado : '');
+  };
+  api.lineaTexto = (id, texto, nota) => {
+    const L = lineas[id]; if (!L) return;
+    L.code.textContent = texto;
+    if (nota !== undefined) {
+      if (!L.nota) { L.nota = document.createElement('span'); L.nota.className = 'nota'; L.li.appendChild(L.nota); }
+      L.nota.textContent = nota;
+    }
+  };
+  api.limpiarLineas = (estado) => { for (const id in lineas) api.resaltarLinea(id, estado || 'normal'); };
+  api.traza = (texto, estado) => {
+    const ol = $('traza'); if (!ol) return;
+    const li = document.createElement('li');
+    if (estado) li.className = 's-' + estado;
+    li.textContent = texto;
+    ol.appendChild(li);
+    while (ol.children.length > (I?.trazaMax || 6)) ol.firstChild.remove();
+  };
+  api.reiniciarInspector = () => {
+    for (const id in lineas) {
+      const L = lineas[id];
+      L.code.textContent = L.texto; api.resaltarLinea(id, 'normal');
+      if (L.nota) L.nota.textContent = L.notaTexto;
+    }
+    const ol = $('traza'); if (ol) ol.innerHTML = '';
+  };
 
   function duracionPaso(P) {
     const texto = (P.titulo + ' ' + P.texto.replace(/<[^>]+>/g, '') + ' ' + (P.analogia || '')).length;
@@ -1085,7 +1507,8 @@ window.CONCEPTO = (() => {
   }
   // Avanza la simulación sin esperar fotogramas: EXPLICA.simular(10) corre 10 s simulados.
   // Sirve para verificar el diagrama aunque la pestaña esté en segundo plano.
-  api.simular = (seg) => { for (let t = 0; t < seg; t += 1 / 30) avanzar(1 / 30); };
+  // Devuelve una promesa: usa `await EXPLICA.simular(10)` para que también avancen las secuencias con await.
+  api.simular = async (seg) => { for (let t = 0; t < seg; t += 1 / 30) { avanzar(1 / 30); await null; } };
 
   function avanzar(dt) {
     for (let k = temporizadores.length - 1; k >= 0; k--) {
@@ -1110,6 +1533,7 @@ window.CONCEPTO = (() => {
 
     for (let k = efectos.length - 1; k >= 0; k--) {
       const e = efectos[k]; e.t += dt; const f = e.t / e.dur;
+      if (e.tipo === 'clase') { if (f >= 1) { e.nodo.g.classList.remove(e.clase); efectos.splice(k, 1); } continue; }
       if (f >= 1) { e.g.remove(); efectos.splice(k, 1); if (e.nodo && e.nodo.globo?.g === e.g) e.nodo.globo = null; continue; }
       if (e.tipo === 'caer') { e.g.setAttribute('transform', `translate(${e.x},${e.y + f * 16})`); e.g.setAttribute('opacity', 1 - f); }
       if (e.tipo === 'pulso') { const r = 4 + f * e.base * 2.2; e.g.setAttribute('rx', r * COS * 1.4); e.g.setAttribute('ry', r * 0.7); e.g.setAttribute('opacity', 1 - f); }
@@ -1124,7 +1548,7 @@ window.CONCEPTO = (() => {
     actualizarLift(dt);
 
     if (reproduciendo) {
-      tiempoPaso += dt;
+      if (!ejecutando) tiempoPaso += dt;
       if (tiempoPaso > duracionPaso(C.pasos[paso])) {
         if (paso < C.pasos.length - 1) irAPaso(paso + 1, true); else alternarPlay(false);
       }
@@ -1137,17 +1561,17 @@ window.CONCEPTO = (() => {
     if (t) return t;
     return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
-  try { const t = localStorage.getItem('explica-visual-tema'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (_) {}
+  try { const t = localStorage.getItem('explica-intuicion-tema'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (_) {}
   $('tema').addEventListener('click', () => {
     const nuevo = temaActual() === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', nuevo);
-    try { localStorage.setItem('explica-visual-tema', nuevo); } catch (_) {}
+    try { localStorage.setItem('explica-intuicion-tema', nuevo); } catch (_) {}
   });
 
   // ---- Arranque ----------------------------------------------------------
-  document.title = C.titulo + ' · explica-visual';
+  document.title = C.titulo + ' · explica-intuicion';
   $('titulo').textContent = C.titulo;
-  $('kicker').textContent = 'explica-visual' + (C.contexto ? ' · ' + C.contexto : '');
+  $('kicker').textContent = 'explica-intuicion' + (C.contexto ? ' · ' + C.contexto : '');
   $('frase').textContent = C.frase || '';
   $('analogia-linea').textContent = C.analogia?.texto || '';
 
@@ -1174,6 +1598,7 @@ window.CONCEPTO = (() => {
 
   construir();
   construirControles();
+  construirInspector();
   construirGlosario();
   encuadrar();
   let tResize; addEventListener('resize', () => { clearTimeout(tResize); tResize = setTimeout(encuadrar, 120); });
