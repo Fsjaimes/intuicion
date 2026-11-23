@@ -12,7 +12,7 @@
 <div class="app">
   <header class="cabecera">
     <div>
-      <p class="kicker" id="kicker">explica-visual</p>
+      <p class="kicker" id="kicker">explica-intuicion</p>
       <h1 id="titulo"></h1>
       <p class="frase" id="frase"></p>
       <p class="analogia-linea" id="analogia-linea"></p>
@@ -25,12 +25,31 @@
     </div>
   </header>
 
-  <section class="figura" aria-label="Diagrama interactivo">
-    <svg class="escena" id="escena" role="img" aria-labelledby="titulo"></svg>
-    <div class="insignia" id="insignia"></div>
-    <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
-    <div class="tarjeta" id="tarjeta" role="status" aria-live="polite"><p class="vacia">Toca o pasa el puntero sobre una pieza para ver qué es.</p></div>
-  </section>
+  <div class="laboratorio" id="laboratorio">
+    <section class="figura" aria-label="Diagrama interactivo">
+      <svg class="escena" id="escena" role="img" aria-labelledby="titulo"></svg>
+      <div class="insignia" id="insignia"></div>
+      <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+      <div class="acciones-escena" id="acciones-escena" role="group" aria-label="Acciones" hidden></div>
+      <div class="tarjeta" id="tarjeta" role="status" aria-live="polite"><p class="vacia">Toca o pasa el puntero sobre una pieza para ver qué es.</p></div>
+    </section>
+
+    <aside class="inspector" id="inspector" aria-label="Inspector" hidden>
+      <div class="insp-cabecera">
+        <h2 id="insp-titulo">Inspector</h2>
+        <p class="insp-sub" id="insp-sub"></p>
+      </div>
+      <div class="insp-bloque" id="insp-entradas-bloque" hidden>
+        <h3>Prueba con</h3>
+        <div class="entradas" id="entradas" role="group" aria-label="Entradas de ejemplo"></div>
+      </div>
+      <ol class="lineas" id="lineas" hidden></ol>
+      <div class="insp-bloque" id="insp-traza-bloque" hidden>
+        <h3>Lo que acaba de pasar</h3>
+        <ol class="traza" id="traza" aria-live="polite"></ol>
+      </div>
+    </aside>
+  </div>
 
   <section class="narracion">
     <div aria-live="polite">

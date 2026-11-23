@@ -1,7 +1,9 @@
-/* explica-visual · motor
+/* explica-intuicion · motor
    Lee window.CONCEPTO (ver references/motor-api.md) y monta:
-   escena isométrica, partículas, pasos con narración, tour automático,
-   intensidad del puntero, tema claro/oscuro, panel de juego y glosario. */
+   escena isométrica con primitivas neutrales (caja, cilindro, persona, cola, plano,
+   agente, documento/codigo, escudo/filtro, matriz), estados semánticos, partículas,
+   pasos con narración, tour automático, modos continuo / turnos / híbrido, inspector
+   sincronizado, intensidad del puntero, tema claro/oscuro, panel de juego y glosario. */
 (() => {
   'use strict';
   const C = window.CONCEPTO;
@@ -141,7 +143,113 @@
     n.h = 0; n.radioBase = (w + d) / 4; n.medidor = () => {};
   }
 
-  const FORMAS = { caja, cilindro, persona, cola, plano };
+  // Prisma isométrico genérico (base en x, y; altura de z0 a z0 + h). Devuelve sus caras.
+  function prisma(g, x, y, w, d, h, z0, extra) {
+    const hw = w / 2, hd = d / 2, z1 = (z0 || 0) + h, z = z0 || 0;
+    const a = (dx, dy, zz) => iso(x + dx, y + dy, zz);
+    const cls = (c) => 'trazo ' + c + (extra ? ' ' + extra : '');
+    return {
+      der: el('polygon', { class: cls('c-der'), points: pts([a(hw, -hd, z), a(hw, hd, z), a(hw, hd, z1), a(hw, -hd, z1)]) }, g),
+      izq: el('polygon', { class: cls('c-izq'), points: pts([a(-hw, hd, z), a(hw, hd, z), a(hw, hd, z1), a(-hw, hd, z1)]) }, g),
+      sup: el('polygon', { class: cls('c-sup'), points: pts([a(-hw, -hd, z1), a(hw, -hd, z1), a(hw, hd, z1), a(-hw, hd, z1)]) }, g),
+    };
+  }
+
+  // agente: pedestal + núcleo flotante con un halo en órbita (estado: inactivo, activo, alerta, saturado).
+  // El medidor llena el núcleo (contexto usado, carga, confianza…).
+  function agente(n, g) {
+    const r = n.def.r || 24, hPed = n.def.h ?? 10;
+    const rx = Math.SQRT2 * r * COS, ry = Math.SQRT2 * r * SIN;
+    const [bx, by] = iso(n.x, n.y, 0), ty = by - hPed;
+    el('path', { class: 'trazo c-izq', d: `M${bx - rx},${ty} L${bx - rx},${by} A${rx},${ry} 0 0 0 ${bx + rx},${by} L${bx + rx},${ty} A${rx},${ry} 0 0 1 ${bx - rx},${ty} Z` }, g);
+    el('ellipse', { class: 'trazo c-sup', cx: bx, cy: ty, rx, ry }, g);
+    const rc = r * 0.66, cy = ty - rc - 12;
+    const hx = rx * 1.12, hy = ry * 1.12;
+    el('path', { class: 'halo', d: `M${bx - hx},${cy} A${hx},${hy} 0 0 1 ${bx + hx},${cy}` }, g);
+    el('circle', { class: 'trazo c-sup nucleo', cx: bx, cy, r: rc }, g);
+    const idClip = 'clip-' + String(n.def.id).replace(/[^\w-]/g, '_');
+    const clip = el('clipPath', { id: idClip }, g);
+    el('circle', { cx: bx, cy, r: rc - 0.5 }, clip);
+    const med = el('rect', { class: 'medidor', x: bx - rc, width: rc * 2, y: cy + rc, height: 0, 'clip-path': `url(#${idClip})` }, g);
+    el('circle', { class: 'detalle', cx: bx, cy, r: rc * 0.34 }, g);
+    el('path', { class: 'halo', d: `M${bx - hx},${cy} A${hx},${hy} 0 0 0 ${bx + hx},${cy}` }, g);
+    n.h = by - (cy - rc); n.radioBase = ry;
+    n.estadoInicial = 'inactivo';
+    n.medidor = (f) => {
+      const hh = 2 * rc * Math.max(0, Math.min(1, f));
+      med.setAttribute('y', cy + rc - hh); med.setAttribute('height', hh);
+    };
+  }
+
+  // documento / codigo: tarjeta de pie con renglones en la cara frontal.
+  // Cada renglón cambia de estado con api.renglon(id, i, estado).
+  function documento(n, g) {
+    const esCodigo = n.def.tipo === 'codigo';
+    const w = n.def.w || 48, d = n.def.d || 8, h = n.def.h ?? 62, hw = w / 2, hd = d / 2;
+    const { x, y } = n;
+    const a = (dx, dy, z) => iso(x + dx, y + dy, z);
+    const caras = prisma(g, x, y, w, d, h, 0);
+    const med = el('polygon', { class: 'medidor', points: '' }, g);
+    g.insertBefore(med, caras.sup);
+    const k = n.def.lineas || 5;
+    const margen = 7, paso_ = Math.min(10, (h - 16) / k);
+    const sangrias = esCodigo ? [0, 1, 2, 2, 1, 2, 1, 0, 1, 0] : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const largos = esCodigo ? [0.7, 0.8, 0.55, 0.7, 0.45, 0.6, 0.5, 0.3, 0.6, 0.4] : [0.55, 0.95, 0.85, 0.92, 0.6, 0.9, 0.8, 0.7, 0.9, 0.5];
+    n.renglones = [];
+    for (let i = 0; i < k; i++) {
+      const z = h - 10 - i * paso_;
+      const s = sangrias[i % sangrias.length] * 5;
+      const L = (w - margen * 2 - s) * largos[i % largos.length];
+      const ini = -hw + margen + s;
+      const clase = 'renglon' + (!esCodigo && i === 0 ? ' titulo' : '');
+      n.renglones.push(el('polyline', { class: clase, points: pts([a(ini, hd, z), a(ini + L, hd, z)]) }, g));
+    }
+    n.h = h; n.radioBase = (w + d) / 4;
+    n.medidor = (f) => {
+      const z = h * Math.max(0, Math.min(1, f));
+      med.setAttribute('points', z <= 0.01 ? '' : pts([a(-hw, hd, 0), a(hw, hd, 0), a(hw, hd, z), a(-hw, hd, z)]));
+    };
+  }
+
+  // escudo / filtro: compuerta entre dos postes (estado: abierto, filtrando, cerrado).
+  function escudo(n, g) {
+    const w = n.def.w || 10, d = n.def.d || 64, h = n.def.h ?? 54, hd = d / 2;
+    const { x, y } = n;
+    prisma(g, x, y - hd + w / 2, w, w, h + 6, 0);
+    const panel = prisma(g, x, y, w * 0.5, d - w * 2, h - 8, 6, 'panel');
+    const a = (dx, dy, z) => iso(x + dx, y + dy, z);
+    const rej = el('g', { class: 'rejilla' }, g);
+    const tramos = 5, largo = d - w * 2;
+    for (let i = 1; i < tramos; i++) {
+      const yy = -largo / 2 + largo * i / tramos;
+      el('polyline', { points: pts([a(w * 0.25, yy, 8), a(w * 0.25, yy, h - 4)]) }, rej);
+    }
+    void panel;
+    prisma(g, x, y + hd - w / 2, w, w, h + 6, 0);
+    n.h = h + 6; n.radioBase = (w + d) / 4;
+    n.estadoInicial = n.def.tipo === 'filtro' ? 'filtrando' : 'abierto';
+    n.medidor = () => {};
+  }
+
+  // matriz: cuadrícula isométrica de celdas (filas × columnas). api.celda(id, f, c, estado).
+  function matriz(n, g) {
+    const F = n.def.filas || 3, K = n.def.columnas || 4, t = n.def.celda || 20, p = t + (n.def.separacion ?? 4), h = n.def.h ?? 5;
+    const orden = [];
+    for (let f = 0; f < F; f++) for (let c = 0; c < K; c++) orden.push([f, c]);
+    orden.sort((A, B) => (A[0] + A[1]) - (B[0] + B[1]));
+    n.celdas = Array.from({ length: F }, () => []);
+    for (const [f, c] of orden) {
+      const x = n.x + (c - (K - 1) / 2) * p, y = n.y + (f - (F - 1) / 2) * p;
+      const cg = el('g', { class: 'celda s-vacia' }, g);
+      prisma(cg, x, y, t, t, h, 0);
+      const ancla = iso(x, y, h);
+      n.celdas[f][c] = { g: cg, ancla, texto: null };
+    }
+    n.h = h; n.radioBase = (K + F) * p / 4; n.anchoU = (K + F) * p * COS;
+    n.medidor = () => {};
+  }
+
+  const FORMAS = { caja, cilindro, persona, cola, plano, agente, documento, codigo: documento, escudo, filtro: escudo, matriz };
 
   // ---- Construcción de la escena ------------------------------------------
   function construir() {
@@ -177,6 +285,7 @@
       g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); seleccionar(def.id, true); } });
       nodos[def.id] = n;
       n.medidor(0);
+      if (def.estado || n.estadoInicial) api.estado(def.id, def.estado || n.estadoInicial);
     }
 
     for (const def of C.escena.enlaces || []) {
@@ -203,7 +312,8 @@
     if (def.tipo === 'plano') { y = by - n.radioBase - 10; }
     const t = el('text', { x, y, 'text-anchor': anchor }, g);
     t.textContent = def.etiqueta || '';
-    n.subEl = el('text', { x, y: y + 16, 'text-anchor': anchor, class: 'sub' }, g);
+    // dy en em: la subetiqueta se separa en proporción al tamaño del texto (que crece en móvil).
+    n.subEl = el('text', { x, y, dy: '1.4em', 'text-anchor': anchor, class: 'sub' }, g);
     n.subEl.textContent = def.sub || '';
   }
 
@@ -224,7 +334,8 @@
   }
   function reescalarTexto() {
     const escala = svg.clientWidth / vb.w || 1;
-    const fs = Math.min(22, Math.max(13, 12 / escala));
+    // En pantallas estrechas el texto crece más (hasta ~10 px reales) para seguir siendo legible.
+    const fs = Math.min(escala < 0.5 ? 27 : 22, Math.max(13, 12 / escala));
     svg.style.setProperty('--fs', fs.toFixed(1));
   }
 
@@ -247,8 +358,9 @@
     nodo: (id) => nodos[id],
     visible: (id) => nodos[id] && !nodos[id].g.classList.contains('oculto'),
 
+    // ruta: ids de nodo, 'matriz:f,c' para una celda, { nodo, celda: [f, c] } o puntos [x, y].
     enviar(ruta, estilo, alLlegar, opciones) {
-      const ptsRuta = ruta.map((id) => nodos[id]?.ancla).filter(Boolean);
+      const ptsRuta = ruta.map(punto).filter(Boolean);
       if (ptsRuta.length < 2) return null;
       const est = typeof estilo === 'string' ? (ESTILOS[estilo] || ESTILOS.peticion) : { ...ESTILOS.peticion, ...estilo };
       const jit = (Math.random() - 0.5) * 6;
@@ -267,16 +379,46 @@
     limpiarParticulas() { particulas.splice(0).forEach((p) => p.g.remove()); },
 
     medidor(id, f) { nodos[id]?.medidor(f); },
+    // Estados neutrales: normal, foco, ok, alerta, error, atenuado, apagado;
+    // agente: inactivo, activo, saturado; escudo: abierto, filtrando, cerrado.
     estado(id, e) {
       const n = nodos[id]; if (!n) return;
+      for (const c of [...n.g.classList]) if (c.startsWith('e-')) n.g.classList.remove(c);
+      if (e && e !== 'normal') n.g.classList.add('e-' + e);
       n.g.classList.toggle('apagado', e === 'apagado');
       n.g.classList.toggle('alerta', e === 'alerta');
+      n.estado = e || 'normal';
+    },
+    estadoDe: (id) => nodos[id]?.estado || 'normal',
+    destello(id, tipo) {
+      const n = nodos[id]; if (!n) return;
+      const clase = 'destello-' + (tipo || 'foco');
+      n.g.classList.add(clase);
+      efectos.push({ t: 0, dur: 0.7, tipo: 'clase', nodo: n, clase });
+    },
+    celda(id, f, c, estado) {
+      const cel = nodos[id]?.celdas?.[f]?.[c]; if (!cel) return;
+      cel.g.setAttribute('class', 'celda s-' + (estado || 'vacia'));
+      cel.estado = estado || 'vacia';
+    },
+    celdas(id, estado) { (nodos[id]?.celdas || []).forEach((fila, f) => fila.forEach((_, c) => api.celda(id, f, c, estado))); },
+    estadoCelda: (id, f, c) => nodos[id]?.celdas?.[f]?.[c]?.estado || 'vacia',
+    celdaTexto(id, f, c, texto) {
+      const cel = nodos[id]?.celdas?.[f]?.[c]; if (!cel) return;
+      if (!cel.texto) cel.texto = el('text', { x: cel.ancla[0], y: cel.ancla[1] + 3, 'text-anchor': 'middle', class: 'celda-texto' }, cel.g);
+      cel.texto.textContent = texto ?? '';
+    },
+    renglon(id, i, estado) {
+      const r = nodos[id]?.renglones?.[i]; if (!r) return;
+      const base = r.classList.contains('titulo') ? 'renglon titulo' : 'renglon';
+      r.setAttribute('class', base + (estado && estado !== 'normal' ? ' s-' + estado : ''));
     },
     sub(id, texto) { const n = nodos[id]; if (n?.subEl && n.subEl.textContent !== texto) n.subEl.textContent = texto; },
     enlace(id, estado) {
       const e = enlaces[id]; if (!e) return;
       e.path.classList.toggle('roto', estado === 'roto');
       e.path.classList.toggle('activo', estado === 'activo');
+      e.path.classList.toggle('tenue', estado === 'tenue');
     },
 
     descartar(donde) {
@@ -321,6 +463,47 @@
   };
   window.EXPLICA = api; // útil para depurar desde la consola
 
+  function punto(ref) {
+    if (Array.isArray(ref)) return ref;
+    if (ref && typeof ref === 'object') return ref.celda ? nodos[ref.nodo]?.celdas?.[ref.celda[0]]?.[ref.celda[1]]?.ancla : nodos[ref.nodo]?.ancla;
+    if (typeof ref === 'string' && ref.includes(':')) {
+      const [id, rc] = ref.split(':'); const [f, c] = rc.split(',').map(Number);
+      return nodos[id]?.celdas?.[f]?.[c]?.ancla;
+    }
+    return nodos[ref]?.ancla;
+  }
+
+  // ---- Modo por turnos: secuencias con await ------------------------------
+  // Cada cambio de paso abre una «generación» nueva: las secuencias de la anterior
+  // se quedan sin continuar en silencio, así no pisan el paso actual.
+  let generacion = 0, ejecutando = 0;
+  const modo = C.modo || 'continuo';
+  api.modo = modo;
+  Object.defineProperty(api, 'ocupado', { get: () => ejecutando > 0 });
+  api.esperar = (seg) => {
+    const g0 = generacion;
+    return new Promise((res) => { const t = { resta: seg, fn: () => { if (g0 === generacion) res(); }, ambito: 'global' }; temporizadores.push(t); });
+  };
+  api.viajar = (ruta, estilo, opciones) => {
+    const g0 = generacion;
+    return new Promise((res) => {
+      const p = api.enviar(ruta, estilo, (pp) => { if (g0 === generacion) res(pp); }, opciones);
+      if (!p) res(null);
+    });
+  };
+  // Ejecuta una acción del concepto. Si devuelve una promesa, la escena queda «ocupada» hasta que termine.
+  function ejecutar(fn, ...args) {
+    if (!fn) return;
+    const g0 = generacion;
+    let r;
+    try { r = fn(...args, api); } catch (e) { console.error(e); return; }
+    if (r && typeof r.then === 'function') {
+      ejecutando++; pintarOcupado();
+      r.catch((e) => console.error(e)).finally(() => { if (g0 === generacion) { ejecutando = Math.max(0, ejecutando - 1); pintarOcupado(); } });
+    }
+  }
+  api.ejecutar = (fn) => ejecutar(fn);
+
   function moverParticula(p) {
     let d = p.d, i = 0;
     while (i < p.largos.length - 1 && d > p.largos[i]) { d -= p.largos[i]; i++; }
@@ -334,6 +517,8 @@
     paso = Math.max(0, Math.min(C.pasos.length - 1, i));
     const P = C.pasos[paso];
     tiempoPaso = 0; tourIdx = 0; tourT = 0;
+    generacion++; ejecutando = 0;
+    if (modo !== 'continuo') api.limpiarParticulas();
     for (let k = temporizadores.length - 1; k >= 0; k--) if (temporizadores[k].ambito === 'paso') temporizadores.splice(k, 1);
 
     const num = paso + 1;
@@ -357,9 +542,132 @@
     [...$('puntos').children].forEach((b, k) => { if (k === paso) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); });
 
     ambito = 'paso';
-    try { P.al_entrar?.(api); } finally { ambito = 'global'; }
+    try {
+      P.al_entrar?.(api);
+      // La demostración del paso arranca sola (salvo demo_auto: false) y se puede repetir con su botón.
+      if (P.demo && P.demo_auto !== false) api.despues(P.demo_retraso ?? 0.6, () => { if (!ejecutando) ejecutar(P.demo); });
+    } finally { ambito = 'global'; }
+    pintarAcciones();
+    pintarEntradas();
+    pintarOcupado();
     if (!desdeTour) cerrarTarjeta();
   }
+
+  // ---- Barra de acciones (modo por turnos o híbrido) ---------------------
+  let botonesAccion = [];
+  function pintarAcciones() {
+    const cont = $('acciones-escena');
+    const P = C.pasos[paso];
+    const lista = [];
+    if (P.demo) lista.push({ texto: P.demo_texto || '▶ Ver este paso', fn: P.demo, principal: true });
+    lista.push(...(P.acciones || []), ...(C.acciones || []));
+    cont.innerHTML = ''; botonesAccion = [];
+    for (const a of lista) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'btn' + (a.principal ? ' primario' : '');
+      b.textContent = a.texto;
+      if (a.descripcion) b.title = a.descripcion;
+      b.addEventListener('click', () => { if (a.esperar !== false && ejecutando) return; alternarPlay(false); ejecutar(a.fn); });
+      cont.appendChild(b); botonesAccion.push([a, b]);
+    }
+    cont.hidden = !lista.length;
+  }
+  function pintarOcupado() {
+    for (const [a, b] of botonesAccion) b.disabled = a.esperar !== false && ejecutando > 0;
+    for (const [, b] of botonesEntrada) b.disabled = ejecutando > 0;
+    $('laboratorio').classList.toggle('ocupado', ejecutando > 0);
+  }
+
+  // ---- Inspector / laboratorio en vivo ------------------------------------
+  const I = C.inspector;
+  const lineas = {};          // id → { li, code, texto, nota }
+  let botonesEntrada = [], entradaActual = null;
+  function construirInspector() {
+    if (!I) return;
+    $('inspector').hidden = false;
+    $('laboratorio').classList.add('con-inspector');
+    $('insp-titulo').textContent = I.titulo || 'Inspector';
+    $('insp-sub').textContent = I.subtitulo || '';
+    $('insp-sub').hidden = !I.subtitulo;
+    if ((I.lineas || []).length) {
+      const ol = $('lineas'); ol.hidden = false;
+      if (I.vista) ol.dataset.vista = I.vista;
+      I.lineas.forEach((L, k) => {
+        const li = document.createElement('li');
+        li.className = 'linea'; li.dataset.id = L.id;
+        li.innerHTML = '<span class="num"></span><code></code>';
+        li.querySelector('.num').textContent = L.numero ?? (k + 1);
+        const code = li.querySelector('code');
+        code.textContent = L.texto; code.style.paddingLeft = (L.sangria || 0) * 2 + 'ch';
+        let nota = null;
+        if (L.nota) { nota = document.createElement('span'); nota.className = 'nota'; nota.textContent = L.nota; li.appendChild(nota); }
+        ol.appendChild(li);
+        lineas[L.id] = { li, code, texto: L.texto, nota, notaTexto: L.nota || '' };
+      });
+    }
+    if ((I.entradas || []).length) {
+      $('insp-entradas-bloque').hidden = false;
+      const cont = $('entradas');
+      for (const e of I.entradas) {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'btn entrada'; b.dataset.id = e.id;
+        b.textContent = e.texto;
+        if (e.detalle) b.title = e.detalle;
+        b.setAttribute('aria-pressed', 'false');
+        b.addEventListener('click', () => {
+          if (ejecutando) return;
+          alternarPlay(false);
+          entradaActual = e.id;
+          botonesEntrada.forEach(([x, bb]) => bb.setAttribute('aria-pressed', String(x.id === e.id)));
+          ejecutar(e.fn || I.al_elegir, e);
+        });
+        cont.appendChild(b); botonesEntrada.push([e, b]);
+      }
+    }
+    if (I.traza !== false) $('insp-traza-bloque').hidden = false;
+  }
+  function pintarEntradas() {
+    const filtro = C.pasos[paso].entradas;
+    for (const [e, b] of botonesEntrada) b.hidden = !!filtro && !filtro.includes(e.id);
+  }
+
+  Object.defineProperty(api, 'entradaActual', { get: () => entradaActual });
+  api.entrada = (id) => (I?.entradas || []).find((e) => e.id === id);
+  api.elegirEntrada = (id) => {
+    const par = botonesEntrada.find(([e]) => e.id === id); if (!par) return;
+    entradaActual = id;
+    botonesEntrada.forEach(([x, bb]) => bb.setAttribute('aria-pressed', String(x.id === id)));
+    ejecutar(par[0].fn || I.al_elegir, par[0]);
+  };
+  api.resaltarLinea = (id, estado) => {
+    const L = lineas[id]; if (!L) return;
+    L.li.className = 'linea' + (estado && estado !== 'normal' ? ' s-' + estado : '');
+  };
+  api.lineaTexto = (id, texto, nota) => {
+    const L = lineas[id]; if (!L) return;
+    L.code.textContent = texto;
+    if (nota !== undefined) {
+      if (!L.nota) { L.nota = document.createElement('span'); L.nota.className = 'nota'; L.li.appendChild(L.nota); }
+      L.nota.textContent = nota;
+    }
+  };
+  api.limpiarLineas = (estado) => { for (const id in lineas) api.resaltarLinea(id, estado || 'normal'); };
+  api.traza = (texto, estado) => {
+    const ol = $('traza'); if (!ol) return;
+    const li = document.createElement('li');
+    if (estado) li.className = 's-' + estado;
+    li.textContent = texto;
+    ol.appendChild(li);
+    while (ol.children.length > (I?.trazaMax || 6)) ol.firstChild.remove();
+  };
+  api.reiniciarInspector = () => {
+    for (const id in lineas) {
+      const L = lineas[id];
+      L.code.textContent = L.texto; api.resaltarLinea(id, 'normal');
+      if (L.nota) L.nota.textContent = L.notaTexto;
+    }
+    const ol = $('traza'); if (ol) ol.innerHTML = '';
+  };
 
   function duracionPaso(P) {
     const texto = (P.titulo + ' ' + P.texto.replace(/<[^>]+>/g, '') + ' ' + (P.analogia || '')).length;
@@ -545,7 +853,8 @@
   }
   // Avanza la simulación sin esperar fotogramas: EXPLICA.simular(10) corre 10 s simulados.
   // Sirve para verificar el diagrama aunque la pestaña esté en segundo plano.
-  api.simular = (seg) => { for (let t = 0; t < seg; t += 1 / 30) avanzar(1 / 30); };
+  // Devuelve una promesa: usa `await EXPLICA.simular(10)` para que también avancen las secuencias con await.
+  api.simular = async (seg) => { for (let t = 0; t < seg; t += 1 / 30) { avanzar(1 / 30); await null; } };
 
   function avanzar(dt) {
     for (let k = temporizadores.length - 1; k >= 0; k--) {
@@ -570,6 +879,7 @@
 
     for (let k = efectos.length - 1; k >= 0; k--) {
       const e = efectos[k]; e.t += dt; const f = e.t / e.dur;
+      if (e.tipo === 'clase') { if (f >= 1) { e.nodo.g.classList.remove(e.clase); efectos.splice(k, 1); } continue; }
       if (f >= 1) { e.g.remove(); efectos.splice(k, 1); if (e.nodo && e.nodo.globo?.g === e.g) e.nodo.globo = null; continue; }
       if (e.tipo === 'caer') { e.g.setAttribute('transform', `translate(${e.x},${e.y + f * 16})`); e.g.setAttribute('opacity', 1 - f); }
       if (e.tipo === 'pulso') { const r = 4 + f * e.base * 2.2; e.g.setAttribute('rx', r * COS * 1.4); e.g.setAttribute('ry', r * 0.7); e.g.setAttribute('opacity', 1 - f); }
@@ -584,7 +894,7 @@
     actualizarLift(dt);
 
     if (reproduciendo) {
-      tiempoPaso += dt;
+      if (!ejecutando) tiempoPaso += dt;
       if (tiempoPaso > duracionPaso(C.pasos[paso])) {
         if (paso < C.pasos.length - 1) irAPaso(paso + 1, true); else alternarPlay(false);
       }
@@ -597,17 +907,17 @@
     if (t) return t;
     return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
-  try { const t = localStorage.getItem('explica-visual-tema'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (_) {}
+  try { const t = localStorage.getItem('explica-intuicion-tema'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (_) {}
   $('tema').addEventListener('click', () => {
     const nuevo = temaActual() === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', nuevo);
-    try { localStorage.setItem('explica-visual-tema', nuevo); } catch (_) {}
+    try { localStorage.setItem('explica-intuicion-tema', nuevo); } catch (_) {}
   });
 
   // ---- Arranque ----------------------------------------------------------
-  document.title = C.titulo + ' · explica-visual';
+  document.title = C.titulo + ' · explica-intuicion';
   $('titulo').textContent = C.titulo;
-  $('kicker').textContent = 'explica-visual' + (C.contexto ? ' · ' + C.contexto : '');
+  $('kicker').textContent = 'explica-intuicion' + (C.contexto ? ' · ' + C.contexto : '');
   $('frase').textContent = C.frase || '';
   $('analogia-linea').textContent = C.analogia?.texto || '';
 
@@ -634,6 +944,7 @@
 
   construir();
   construirControles();
+  construirInspector();
   construirGlosario();
   encuadrar();
   let tResize; addEventListener('resize', () => { clearTimeout(tResize); tResize = setTimeout(encuadrar, 120); });

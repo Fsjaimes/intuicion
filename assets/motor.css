@@ -1,4 +1,4 @@
-/* explica-visual · estilos del motor
+/* explica-intuicion · estilos del motor
    Línea fina (hairline), casi monocromo, un solo acento, fondo crema.
    Todo color sale de los tokens de :root para que el tema oscuro funcione. */
 
@@ -14,6 +14,10 @@
   --acento: #c8553d;
   --acento-suave: rgba(200, 85, 61, 0.16);
   --sombra: rgba(42, 38, 32, 0.18);
+  /* Único color además del acento: el estado «ok». Úsalo solo para resultados correctos. */
+  --ok: #5c7d58;
+  --ok-suave: rgba(92, 125, 88, 0.18);
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --fs: 13;
   color-scheme: light;
 }
@@ -22,6 +26,7 @@
     --bg: #1b1916; --panel: #211f1b; --ink: #ece3d6; --ink-2: #a99d8e; --line: #3a352e;
     --cara-sup: #2c2924; --cara-izq: #24221e; --cara-der: #1f1d1a;
     --acento: #e3805f; --acento-suave: rgba(227, 128, 95, 0.2); --sombra: rgba(0, 0, 0, 0.5);
+    --ok: #93b98d; --ok-suave: rgba(147, 185, 141, 0.2);
     color-scheme: dark;
   }
 }
@@ -29,6 +34,7 @@
   --bg: #1b1916; --panel: #211f1b; --ink: #ece3d6; --ink-2: #a99d8e; --line: #3a352e;
   --cara-sup: #2c2924; --cara-izq: #24221e; --cara-der: #1f1d1a;
   --acento: #e3805f; --acento-suave: rgba(227, 128, 95, 0.2); --sombra: rgba(0, 0, 0, 0.5);
+    --ok: #93b98d; --ok-suave: rgba(147, 185, 141, 0.2);
   color-scheme: dark;
 }
 
@@ -141,6 +147,91 @@ input[type="range"] { accent-color: var(--acento); width: 120px; }
 .escena .globo rect { fill: var(--bg); stroke: var(--ink); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .escena .globo text { font-size: calc(var(--fs) * 0.92px); }
 
+/* Estados semánticos neutrales (api.estado) */
+.escena .enlace.tenue { opacity: .35; }
+.escena .nodo.e-foco .trazo { stroke: var(--acento); }
+.escena .nodo.e-ok .trazo { stroke: var(--ok); }
+.escena .nodo.e-ok .c-sup { fill: var(--ok-suave); }
+.escena .nodo.e-error .trazo { stroke: var(--acento); stroke-width: 1.6; }
+.escena .nodo.e-error .c-izq, .escena .nodo.e-error .c-der { fill: var(--acento-suave); }
+.escena .nodo.e-atenuado .forma { opacity: .35; }
+.escena .nodo.destello-ok .trazo { stroke: var(--ok); stroke-width: 2.4; }
+.escena .nodo.destello-error .trazo { stroke: var(--acento); stroke-width: 2.4; }
+.escena .nodo.destello-foco .trazo { stroke: var(--acento); stroke-width: 2; }
+
+/* agente */
+.escena .halo { fill: none; stroke: var(--ink-2); stroke-width: 1.2; vector-effect: non-scaling-stroke; stroke-dasharray: 2 4; opacity: .8; }
+.escena .nodo.e-activo .halo { stroke: var(--acento); stroke-dasharray: 6 4; opacity: 1; animation: orbita 1.1s linear infinite; }
+.escena .nodo.e-activo .nucleo, .escena .nodo.e-saturado .nucleo { stroke: var(--acento); }
+.escena .nodo.e-alerta .halo, .escena .nodo.e-saturado .halo { stroke: var(--acento); stroke-dasharray: none; stroke-width: 1.8; opacity: 1; }
+.escena .nodo.e-saturado .nucleo { fill: var(--acento-suave); }
+.escena .nodo.e-ok .halo { stroke: var(--ok); stroke-dasharray: none; opacity: 1; }
+@keyframes orbita { to { stroke-dashoffset: -20; } }
+
+/* documento / codigo */
+.escena .renglon { stroke: var(--ink-2); stroke-width: 1.6; stroke-linecap: round; vector-effect: non-scaling-stroke; fill: none; transition: stroke .2s; }
+.escena .renglon.titulo { stroke: var(--ink); stroke-width: 2.2; }
+.escena .renglon.s-foco { stroke: var(--acento); stroke-width: 2.6; }
+.escena .renglon.s-ok { stroke: var(--ok); stroke-width: 2.4; }
+.escena .renglon.s-alerta { stroke: var(--acento); stroke-dasharray: 3 3; }
+.escena .renglon.s-error { stroke: var(--acento); stroke-width: 2.6; }
+.escena .renglon.s-atenuado { opacity: .3; }
+
+/* escudo / filtro */
+.escena .panel { transition: opacity .25s, fill .25s; }
+.escena .rejilla polyline { stroke: var(--ink-2); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.escena .rejilla { display: none; }
+.escena .nodo.e-filtrando .rejilla { display: inline; }
+.escena .nodo.e-abierto .panel { fill: none; stroke-dasharray: 3 4; opacity: .5; }
+.escena .nodo.e-cerrado .panel { fill: var(--acento-suave); stroke: var(--acento); }
+
+/* matriz */
+.escena .celda .c-sup { transition: fill .2s; }
+.escena .celda.s-activa .c-sup { fill: var(--ink-2); fill-opacity: .3; }
+.escena .celda.s-foco .c-sup { fill: var(--acento-suave); }
+.escena .celda.s-foco .trazo { stroke: var(--acento); }
+.escena .celda.s-ok .c-sup { fill: var(--ok); fill-opacity: .55; }
+.escena .celda.s-alerta .c-sup { fill: var(--acento); fill-opacity: .3; }
+.escena .celda.s-error .c-sup { fill: var(--acento); fill-opacity: .75; }
+.escena .celda.s-atenuado { opacity: .35; }
+.escena .celda-texto { font-size: calc(var(--fs) * 0.6px); fill: var(--ink); pointer-events: none; }
+
+/* Laboratorio: figura + inspector */
+.laboratorio { display: grid; gap: 16px; }
+.laboratorio.con-inspector { grid-template-columns: minmax(0, 1fr) minmax(260px, 330px); align-items: start; }
+.acciones-escena { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.acciones-escena .btn { min-height: 38px; font-size: 13px; }
+.inspector {
+  border: 1px solid var(--line); border-radius: 16px; background: var(--panel);
+  padding: 16px; font-size: 14px; display: flex; flex-direction: column; gap: 16px; min-width: 0;
+}
+.inspector h2 { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); font-weight: 500; margin: 0; }
+.inspector h3 { font-size: 12px; color: var(--ink-2); font-weight: 500; margin: 0 0 8px; }
+.insp-sub { margin: 4px 0 0; color: var(--ink-2); font-size: 13px; }
+.entradas { display: flex; flex-direction: column; gap: 6px; }
+.entradas .entrada { justify-content: flex-start; text-align: left; border-radius: 10px; min-height: 36px; padding: 6px 12px; font-size: 13px; line-height: 1.35; }
+.entradas .entrada[aria-pressed="true"] { border-color: var(--acento); background: var(--acento-suave); }
+.lineas {
+  list-style: none; margin: 0; padding: 8px 0; font-family: var(--mono); font-size: 12.5px; line-height: 1.55;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--bg); overflow-wrap: anywhere;
+}
+.linea { display: grid; grid-template-columns: 2.4em minmax(0, 1fr); column-gap: 8px; padding: 2px 10px 2px 0; border-left: 2px solid transparent; transition: background .2s, opacity .2s; }
+.linea .num { color: var(--ink-2); text-align: right; user-select: none; }
+.linea code { font: inherit; white-space: pre-wrap; }
+.linea .nota { grid-column: 2; color: var(--ink-2); font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif; font-size: 11.5px; }
+.linea.s-foco { background: var(--acento-suave); border-left-color: var(--acento); }
+.linea.s-ok { background: var(--ok-suave); border-left-color: var(--ok); }
+.linea.s-alerta { border-left-color: var(--acento); border-left-style: dashed; }
+.linea.s-error { background: var(--acento-suave); border-left-color: var(--acento); color: var(--acento); }
+.linea.s-atenuado { opacity: .4; }
+.traza { list-style: none; margin: 0; padding: 0; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+.traza li { padding-left: 14px; position: relative; color: var(--ink-2); transition: color .4s; }
+.traza li::before { content: ""; position: absolute; left: 0; top: .55em; width: 6px; height: 6px; border-radius: 50%; background: var(--ink-2); }
+.traza li:last-child { color: var(--ink); font-weight: 500; }
+.traza li.s-ok::before { background: var(--ok); }
+.traza li.s-error::before, .traza li.s-alerta::before { background: var(--acento); }
+.laboratorio.ocupado .entradas .entrada:not([aria-pressed="true"]) { opacity: .55; }
+
 /* Narración del paso */
 .narracion { display: grid; grid-template-columns: 1fr auto; gap: 20px 32px; align-items: start; margin-top: 20px; }
 .narracion h2 { font-size: 22px; letter-spacing: -0.01em; margin: 0 0 6px; font-weight: 600; }
@@ -193,6 +284,9 @@ input[type="range"] { accent-color: var(--acento); width: 120px; }
 
 .pie { margin-top: 40px; font-size: 12px; color: var(--ink-2); }
 
+@media (max-width: 900px) {
+  .laboratorio.con-inspector { grid-template-columns: 1fr; }
+}
 @media (max-width: 720px) {
   .app { padding-top: 24px; }
   .narracion { grid-template-columns: 1fr; }
@@ -202,4 +296,5 @@ input[type="range"] { accent-color: var(--acento); width: 120px; }
 }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
+  .escena .halo { animation: none !important; }
 }
