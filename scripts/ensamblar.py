@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ensambla un HTML autocontenido de explica-visual.
+"""Ensambla un HTML autocontenido de explica-intuicion.
 
 Uso:
     python3 scripts/ensamblar.py <concepto.js> <salida.html>
@@ -28,7 +28,7 @@ def main() -> int:
         return 1
 
     m = re.search(r"titulo\s*:\s*['\"`]([^'\"`]+)", concepto)
-    titulo = (m.group(1) if m else "Concepto") + " · explica-visual"
+    titulo = (m.group(1) if m else "Concepto") + " · explica-intuicion"
 
     html = (RAIZ / "base.html").read_text(encoding="utf-8")
     # Reemplazos con funciones para que las barras invertidas del JS no se interpreten.
