@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITULO}}</title>
+<style>
+{{CSS}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="cabecera">
+    <div>
+      <p class="kicker" id="kicker">explica-visual</p>
+      <h1 id="titulo"></h1>
+      <p class="frase" id="frase"></p>
+      <p class="analogia-linea" id="analogia-linea"></p>
+    </div>
+    <div class="herramientas">
+      <label>Intensidad <input type="range" id="intensidad" min="0" max="100" value="60" aria-label="Intensidad del efecto del puntero"></label>
+      <button class="btn btn-icono" id="tema" type="button" aria-label="Cambiar tema claro u oscuro">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <section class="figura" aria-label="Diagrama interactivo">
+    <svg class="escena" id="escena" role="img" aria-labelledby="titulo"></svg>
+    <div class="insignia" id="insignia"></div>
+    <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+    <div class="tarjeta" id="tarjeta" role="status" aria-live="polite"><p class="vacia">Toca o pasa el puntero sobre una pieza para ver qué es.</p></div>
+  </section>
+
+  <section class="narracion">
+    <div aria-live="polite">
+      <h2 id="paso-titulo"></h2>
+      <p class="texto" id="paso-texto"></p>
+      <p class="chip" id="paso-analogia"></p>
+    </div>
+    <nav class="navegacion" aria-label="Pasos">
+      <div class="fila">
+        <button class="btn" id="anterior" type="button">← Anterior</button>
+        <button class="btn primario" id="play" type="button" aria-pressed="false">▶ Recorrer</button>
+        <button class="btn" id="siguiente" type="button">Siguiente →</button>
+      </div>
+      <div class="puntos" id="puntos"></div>
+    </nav>
+  </section>
+
+  <section class="juega" id="juega">
+    <h2>Juega con el concepto</h2>
+    <div class="controles" id="controles"></div>
+    <div class="contadores" id="contadores"></div>
+  </section>
+
+  <section class="glosario" id="glosario"></section>
+
+  <p class="pie">← → para cambiar de paso · espacio para recorrer · Tab para recorrer las piezas del diagrama</p>
+</div>
+<script>
+{{CONCEPTO}}
+</script>
+<script>
+{{MOTOR}}
+</script>
+</body>
+</html>
