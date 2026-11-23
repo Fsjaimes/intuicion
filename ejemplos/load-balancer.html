@@ -1,0 +1,1187 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Load balancer · explica-visual</title>
+<style>
+/* explica-visual · estilos del motor
+   Línea fina (hairline), casi monocromo, un solo acento, fondo crema.
+   Todo color sale de los tokens de :root para que el tema oscuro funcione. */
+
+:root {
+  --bg: #f4ebe0;
+  --panel: #f8f1e8;
+  --ink: #2a2620;
+  --ink-2: #6b6257;
+  --line: #d9ccbb;
+  --cara-sup: #fdf9f3;
+  --cara-izq: #efe5d8;
+  --cara-der: #e5d7c5;
+  --acento: #c8553d;
+  --acento-suave: rgba(200, 85, 61, 0.16);
+  --sombra: rgba(42, 38, 32, 0.18);
+  --fs: 13;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1916; --panel: #211f1b; --ink: #ece3d6; --ink-2: #a99d8e; --line: #3a352e;
+    --cara-sup: #2c2924; --cara-izq: #24221e; --cara-der: #1f1d1a;
+    --acento: #e3805f; --acento-suave: rgba(227, 128, 95, 0.2); --sombra: rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1916; --panel: #211f1b; --ink: #ece3d6; --ink-2: #a99d8e; --line: #3a352e;
+  --cara-sup: #2c2924; --cara-izq: #24221e; --cara-der: #1f1d1a;
+  --acento: #e3805f; --acento-suave: rgba(227, 128, 95, 0.2); --sombra: rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+
+.app { max-width: 1080px; margin: 0 auto; padding: 40px 16px 72px; }
+
+/* Encabezado */
+.cabecera { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; }
+.kicker { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 8px; }
+h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.1; letter-spacing: -0.02em; font-weight: 600; margin: 0 0 10px; }
+.frase { font-size: 18px; color: var(--ink); max-width: 62ch; margin: 0; }
+.analogia-linea { font-size: 15px; color: var(--ink-2); max-width: 62ch; margin: 8px 0 0; }
+
+.herramientas { display: flex; gap: 14px; align-items: center; }
+.herramientas label { font-size: 13px; color: var(--ink-2); display: flex; gap: 8px; align-items: center; }
+
+/* Botones y controles */
+.btn {
+  border: 1px solid var(--line); background: transparent; border-radius: 999px;
+  padding: 8px 16px; min-height: 40px; cursor: pointer; font-size: 14px;
+  display: inline-flex; align-items: center; gap: 8px; transition: border-color .15s, background .15s;
+}
+.btn:hover { border-color: var(--ink-2); }
+.btn[disabled] { opacity: .4; cursor: default; }
+.btn.primario { border-color: var(--acento); color: var(--acento); }
+.btn.primario[aria-pressed="true"] { background: var(--acento-suave); }
+.btn-icono { width: 40px; padding: 0; justify-content: center; }
+.btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+
+input[type="range"] { accent-color: var(--acento); width: 120px; }
+
+/* Figura */
+.figura {
+  position: relative; border: 1px solid var(--line); border-radius: 16px;
+  background: var(--panel); overflow: hidden;
+}
+.figura svg.escena { display: block; width: 100%; height: auto; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.insignia {
+  position: absolute; top: 14px; left: 16px; font-size: 12px; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink-2);
+}
+.tarjeta {
+  border-top: 1px solid var(--line); padding: 12px 16px; min-height: 64px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; font-size: 14px; line-height: 1.45;
+}
+.tarjeta .vacia { color: var(--ink-2); margin: 0; }
+.tarjeta h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.tarjeta .ana { color: var(--acento); font-size: 13px; margin: 0; }
+.tarjeta p { margin: 0; color: var(--ink-2); flex-basis: 100%; }
+.tarjeta .ana { flex-basis: auto; }
+.tarjeta .acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+.tarjeta .acciones .btn { min-height: 34px; padding: 4px 12px; font-size: 13px; }
+.aviso {
+  position: absolute; left: 16px; top: 40px; max-width: calc(100% - 32px);
+  font-size: 13px; padding: 6px 12px; border-radius: 999px;
+  background: var(--bg); border: 1px solid var(--acento); color: var(--ink);
+  opacity: 0; transition: opacity .2s; pointer-events: none;
+}
+.aviso.visible { opacity: 1; }
+
+/* SVG: formas */
+.escena text { font-size: calc(var(--fs) * 1px); fill: var(--ink); font-family: inherit; }
+.escena text.sub { fill: var(--ink-2); font-size: calc(var(--fs) * 0.88px); }
+.escena .trazo { stroke: var(--ink); stroke-width: 1; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.escena .c-sup { fill: var(--cara-sup); }
+.escena .c-izq { fill: var(--cara-izq); }
+.escena .c-der { fill: var(--cara-der); }
+.escena .c-nada { fill: none; }
+.escena .detalle { stroke: var(--ink-2); stroke-width: 1; vector-effect: non-scaling-stroke; fill: none; }
+.escena .medidor { fill: var(--acento); opacity: .32; }
+.escena .slot-lleno { fill: var(--acento); fill-opacity: .55; }
+.escena .sombra { fill: var(--sombra); }
+.escena .enlace { stroke: var(--line); stroke-width: 1.25; vector-effect: non-scaling-stroke; fill: none; transition: opacity .3s; }
+.escena .enlace.roto { stroke-dasharray: 3 5; opacity: .5; }
+.escena .enlace.activo { stroke: var(--ink-2); }
+.escena .plano { fill: none; stroke: var(--line); stroke-dasharray: 4 4; vector-effect: non-scaling-stroke; }
+
+.escena .nodo { cursor: pointer; transition: opacity .4s; outline: none; }
+.escena .nodo.oculto { opacity: 0; pointer-events: none; }
+.escena .nodo.apagado .forma { opacity: .38; }
+.escena .nodo.apagado .trazo { stroke-dasharray: 3 3; }
+.escena .nodo.alerta .trazo,
+.escena .nodo.resaltado .trazo,
+.escena .nodo.foco .trazo { stroke: var(--acento); }
+.escena .nodo.resaltado .trazo { stroke-width: 1.6; }
+.escena .nodo:focus-visible .trazo { stroke: var(--acento); stroke-width: 2; }
+.escena .nodo.resaltado text:not(.sub) { font-weight: 600; }
+.escena .enlace-g.oculto { opacity: 0; }
+
+.escena .particula { stroke-width: 1.4; vector-effect: non-scaling-stroke; }
+.escena .p-acento { fill: var(--acento); stroke: none; }
+.escena .p-tinta { fill: var(--ink); stroke: none; }
+.escena .p-aro { fill: var(--panel); stroke: var(--acento); }
+.escena .p-aro-tinta { fill: var(--panel); stroke: var(--ink-2); }
+.escena .p-etiqueta { font-size: calc(var(--fs) * 0.78px); fill: var(--ink-2); }
+.escena .efecto-x { stroke: var(--acento); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.escena .efecto-pulso { fill: none; stroke: var(--acento); vector-effect: non-scaling-stroke; }
+.escena .globo rect { fill: var(--bg); stroke: var(--ink); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.escena .globo text { font-size: calc(var(--fs) * 0.92px); }
+
+/* Narración del paso */
+.narracion { display: grid; grid-template-columns: 1fr auto; gap: 20px 32px; align-items: start; margin-top: 20px; }
+.narracion h2 { font-size: 22px; letter-spacing: -0.01em; margin: 0 0 6px; font-weight: 600; }
+.narracion .texto { margin: 0; max-width: 64ch; }
+.narracion .chip {
+  margin: 12px 0 0; padding: 8px 12px; border-left: 2px solid var(--acento);
+  color: var(--ink-2); font-size: 15px; max-width: 64ch;
+}
+.navegacion { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; }
+.navegacion .fila { display: flex; gap: 8px; }
+.puntos { display: flex; gap: 6px; }
+.puntos button {
+  width: 28px; height: 28px; border: 0; background: transparent; padding: 0; cursor: pointer;
+  display: grid; place-items: center;
+}
+.puntos button::before { content: ""; width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--ink-2); }
+.puntos button[aria-current="step"]::before { background: var(--acento); border-color: var(--acento); }
+
+/* Panel de juego */
+.juega { margin-top: 36px; border-top: 1px solid var(--line); padding-top: 24px; }
+.juega h2, .glosario h2 { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); font-weight: 500; margin: 0 0 16px; }
+.controles { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px 32px; }
+.grupo h3 { font-size: 14px; font-weight: 600; margin: 0 0 10px; }
+.control { margin-bottom: 12px; font-size: 14px; }
+.control .rotulo { display: flex; justify-content: space-between; color: var(--ink-2); margin-bottom: 4px; }
+.control input[type="range"] { width: 100%; }
+.segmentos { display: flex; flex-wrap: wrap; gap: 6px; }
+.segmentos .btn { min-height: 34px; padding: 4px 12px; font-size: 13px; }
+.segmentos .btn[aria-pressed="true"] { border-color: var(--acento); color: var(--acento); background: var(--acento-suave); }
+.interruptor { display: flex; align-items: center; gap: 10px; cursor: pointer; min-height: 32px; }
+.interruptor input { appearance: none; -webkit-appearance: none; width: 34px; height: 20px; border-radius: 999px; border: 1px solid var(--ink-2); position: relative; margin: 0; cursor: pointer; flex: none; }
+.interruptor input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--ink-2); transition: transform .15s; }
+.interruptor input:checked { border-color: var(--acento); background: var(--acento-suave); }
+.interruptor input:checked::after { transform: translateX(14px); background: var(--acento); }
+.contadores { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.contador { border: 1px solid var(--line); border-radius: 12px; padding: 8px 14px; min-width: 120px; }
+.contador b { display: block; font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.contador span { font-size: 12px; color: var(--ink-2); }
+
+/* Glosario y mapa */
+.glosario { margin-top: 36px; border-top: 1px solid var(--line); padding-top: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px 40px; }
+.mapa { width: 100%; border-collapse: collapse; font-size: 14px; }
+.mapa th { text-align: left; font-weight: 500; color: var(--ink-2); font-size: 12px; padding: 0 0 6px; }
+.mapa td { padding: 7px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.mapa td:first-child { padding-right: 16px; color: var(--ink-2); }
+.terminos { margin: 0; font-size: 14px; }
+.terminos dt { font-weight: 600; margin-top: 10px; }
+.terminos dt small { font-weight: 400; color: var(--ink-2); }
+.terminos dd { margin: 0; color: var(--ink-2); }
+
+.pie { margin-top: 40px; font-size: 12px; color: var(--ink-2); }
+
+@media (max-width: 720px) {
+  .app { padding-top: 24px; }
+  .narracion { grid-template-columns: 1fr; }
+  .navegacion { align-items: stretch; }
+  .navegacion .fila { justify-content: space-between; }
+  .puntos { justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="cabecera">
+    <div>
+      <p class="kicker" id="kicker">explica-visual</p>
+      <h1 id="titulo"></h1>
+      <p class="frase" id="frase"></p>
+      <p class="analogia-linea" id="analogia-linea"></p>
+    </div>
+    <div class="herramientas">
+      <label>Intensidad <input type="range" id="intensidad" min="0" max="100" value="60" aria-label="Intensidad del efecto del puntero"></label>
+      <button class="btn btn-icono" id="tema" type="button" aria-label="Cambiar tema claro u oscuro">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <section class="figura" aria-label="Diagrama interactivo">
+    <svg class="escena" id="escena" role="img" aria-labelledby="titulo"></svg>
+    <div class="insignia" id="insignia"></div>
+    <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+    <div class="tarjeta" id="tarjeta" role="status" aria-live="polite"><p class="vacia">Toca o pasa el puntero sobre una pieza para ver qué es.</p></div>
+  </section>
+
+  <section class="narracion">
+    <div aria-live="polite">
+      <h2 id="paso-titulo"></h2>
+      <p class="texto" id="paso-texto"></p>
+      <p class="chip" id="paso-analogia"></p>
+    </div>
+    <nav class="navegacion" aria-label="Pasos">
+      <div class="fila">
+        <button class="btn" id="anterior" type="button">← Anterior</button>
+        <button class="btn primario" id="play" type="button" aria-pressed="false">▶ Recorrer</button>
+        <button class="btn" id="siguiente" type="button">Siguiente →</button>
+      </div>
+      <div class="puntos" id="puntos"></div>
+    </nav>
+  </section>
+
+  <section class="juega" id="juega">
+    <h2>Juega con el concepto</h2>
+    <div class="controles" id="controles"></div>
+    <div class="contadores" id="contadores"></div>
+  </section>
+
+  <section class="glosario" id="glosario"></section>
+
+  <p class="pie">← → para cambiar de paso · espacio para recorrer · Tab para recorrer las piezas del diagrama</p>
+</div>
+<script>
+/* Concepto: Load balancer (balanceador de carga)
+   Analogía: el anfitrión de un restaurante que reparte a los clientes entre los meseros. */
+window.CONCEPTO = (() => {
+  const SERVIDORES = ['s1', 's2', 's3'];
+  const CLIENTES = ['u1', 'u2', 'u3', 'u4'];
+  const CAPACIDAD = 4;       // mesas que atiende cada mesero a la vez
+  const FILA_MAX = 3;        // clientes que pueden esperar de pie
+  const ATENCION = 1.5;      // segundos que tarda en atender una petición
+
+  // Estado de la simulación
+  const S = {};
+  function reiniciar(api) {
+    api.limpiarParticulas();
+    S.acum = 0; S.rr = 0; S.pegado = {}; S.avisoCiego = 0;
+    for (const id of SERVIDORES) {
+      S[id] = S[id] || {};
+      Object.assign(S[id], { activos: [], fila: [], sano: true, enCamino: 0 });
+      api.enlace('lb-' + id, 'normal');
+    }
+    api.reiniciarContadores();
+  }
+  const encendido = (api, id) => api.valor('on_' + id);
+  const lento = (api, id) => id === 's1' && api.valor('lento');
+
+  function marcarSalud(api, id, sano) {
+    if (!api.valor('hc') || S[id].sano === sano) return; // ignora pings que seguían en camino
+    S[id].sano = sano;
+    api.enlace('lb-' + id, sano ? 'normal' : 'roto');
+    api.globo('lb', sano ? `${nombre(id)} volvió` : `${nombre(id)} no responde`, 2.2);
+  }
+  const nombre = (id) => 'Servidor ' + id.slice(1);
+
+  function elegir(api) {
+    const hc = api.valor('hc');
+    const candidatos = SERVIDORES.filter((id) => !hc || S[id].sano);
+    if (!candidatos.length) return null;
+    const alg = api.valor('algoritmo');
+    if (alg === 'least') {
+      // cuenta también las peticiones ya enviadas que aún no llegan
+      const carga = (id) => (S[id].activos.length + S[id].fila.length + S[id].enCamino) / CAPACIDAD;
+      const min = Math.min(...candidatos.map(carga));
+      const empatados = candidatos.filter((id) => carga(id) === min);
+      return empatados[Math.floor(Math.random() * empatados.length)];
+    }
+    if (alg === 'random') return candidatos[Math.floor(Math.random() * candidatos.length)];
+    // round robin: el siguiente en la lista que esté disponible
+    for (let k = 0; k < SERVIDORES.length; k++) {
+      const id = SERVIDORES[(S.rr + k) % SERVIDORES.length];
+      if (candidatos.includes(id)) { S.rr = (SERVIDORES.indexOf(id) + 1) % SERVIDORES.length; return id; }
+    }
+    return candidatos[0];
+  }
+
+  function llegaAlBalanceador(p, api) {
+    const cliente = p.datos.cliente;
+    let id;
+    if (api.valor('algoritmo') === 'sticky') {
+      id = S.pegado[cliente];
+      const valido = id && (!api.valor('hc') || S[id].sano);
+      if (!valido) { S.pegado[cliente] = id = elegir({ valor: (k) => (k === 'algoritmo' ? 'rr' : api.valor(k)) }); }
+    } else id = elegir(api);
+    if (!id) { api.descartar(p); api.contar('rechazadas'); api.aviso('Ningún servidor disponible: el balanceador responde 503'); return; }
+    api.pulso('lb');
+    S[id].enCamino++;
+    api.enviar(['lb', id], 'peticion', (p2) => { S[id].enCamino--; llegaAlServidor(id, p2, api); }, { datos: { cliente, via: 'lb' } });
+  }
+
+  function llegaAlServidor(id, p, api) {
+    if (!encendido(api, id)) {
+      api.descartar(p); api.contar('perdidas');
+      if (!api.valor('hc') && api.paso > 1 && S.avisoCiego <= 0) {
+        api.aviso(`Sin health checks, el balanceador no sabe que el ${nombre(id)} está apagado`);
+        S.avisoCiego = 4;
+      }
+      return;
+    }
+    const s = S[id];
+    if (s.activos.length < CAPACIDAD) s.activos.push({ resta: ATENCION * (lento(api, id) ? 2.6 : 1), ...p.datos });
+    else if (s.fila.length < FILA_MAX) s.fila.push(p.datos);
+    else { api.descartar(p); api.contar('rechazadas'); }
+  }
+
+  return {
+    titulo: 'Load balancer',
+    contexto: 'balanceador de carga',
+    frase: 'Un load balancer (balanceador de carga) recibe todas las peticiones y las reparte entre varios servidores, para que ninguno se sature y si uno falla los demás sigan atendiendo.',
+    analogia: {
+      texto: 'Es como el anfitrión de un restaurante: recibe a cada cliente en la puerta y lo lleva con el mesero que puede atenderlo, para que ninguno se sature.',
+      columnas: ['En el restaurante', 'En el sistema'],
+      mapa: [
+        ['Clientes que llegan', 'Peticiones de los usuarios (HTTP)'],
+        ['El anfitrión en la puerta', 'El load balancer'],
+        ['Los meseros', 'Los servidores (instancias)'],
+        ['Mesas ocupadas de un mesero', 'Conexiones activas de un servidor'],
+        ['Preguntar «¿puedes con otra mesa?»', 'Health check'],
+        ['Turnarse: uno a cada mesero', 'Round robin'],
+        ['Llevar al cliente con su mesero de siempre', 'Sticky sessions'],
+      ],
+    },
+    terminos: [
+      { termino: 'Round robin', traduccion: 'turno rotativo', definicion: 'Reparte las peticiones en orden: una a cada servidor y vuelve a empezar.' },
+      { termino: 'Least connections', traduccion: 'menos conexiones', definicion: 'Envía cada petición al servidor que tiene menos trabajo en ese momento.' },
+      { termino: 'Health check', traduccion: 'chequeo de salud', definicion: 'Pregunta periódica del balanceador a cada servidor para saber si sigue vivo.' },
+      { termino: 'Sticky sessions', traduccion: 'sesiones pegajosas', definicion: 'El mismo usuario siempre va al mismo servidor, útil si este guarda su sesión en memoria.' },
+      { termino: 'Single point of failure', traduccion: 'punto único de fallo', definicion: 'Una pieza que, si cae, tumba todo. Por eso los balanceadores se despliegan en pareja.' },
+    ],
+
+    escena: {
+      nodos: [
+        { id: 'u1', tipo: 'persona', pos: [-390, -150], etiqueta: 'Ana', lado: 'izquierda', analogia: 'Un cliente', descripcion: 'Cada punto que sale de aquí es una petición: abrir una página, enviar un formulario.' },
+        { id: 'u2', tipo: 'persona', pos: [-390, -50], etiqueta: 'Luis', lado: 'izquierda', analogia: 'Un cliente', descripcion: 'Cada punto que sale de aquí es una petición.' },
+        { id: 'u3', tipo: 'persona', pos: [-390, 50], etiqueta: 'Sara', lado: 'izquierda', analogia: 'Un cliente', descripcion: 'Cada punto que sale de aquí es una petición.' },
+        { id: 'u4', tipo: 'persona', pos: [-390, 150], etiqueta: 'Tomás', lado: 'izquierda', analogia: 'Un cliente', descripcion: 'Cada punto que sale de aquí es una petición.' },
+        { id: 'lb', tipo: 'caja', pos: [-70, 0], w: 56, h: 40, etiqueta: 'Load balancer', lado: 'abajo', pasos: [2, 6], analogia: 'El anfitrión', descripcion: 'Es la única dirección que conocen los clientes. Decide a qué servidor va cada petición.' },
+        { id: 's1', tipo: 'caja', pos: [250, -170], w: 62, h: 78, detalle: 'rack', etiqueta: 'Servidor 1', lado: 'derecha', analogia: 'Mesero 1', descripcion: `Atiende hasta ${CAPACIDAD} peticiones a la vez; el relleno muestra qué tan ocupado está.` },
+        { id: 's2', tipo: 'caja', pos: [250, 0], w: 62, h: 78, detalle: 'rack', etiqueta: 'Servidor 2', lado: 'derecha', pasos: [2, 6], analogia: 'Mesero 2', descripcion: `Atiende hasta ${CAPACIDAD} peticiones a la vez.` },
+        { id: 's3', tipo: 'caja', pos: [250, 170], w: 62, h: 78, detalle: 'rack', etiqueta: 'Servidor 3', lado: 'derecha', pasos: [2, 6], analogia: 'Mesero 3', descripcion: `Atiende hasta ${CAPACIDAD} peticiones a la vez.` },
+      ],
+      enlaces: [
+        ...CLIENTES.map((u) => ({ de: u, a: 's1', id: 'directo-' + u, pasos: [1, 1] })),
+        ...CLIENTES.map((u) => ({ de: u, a: 'lb', pasos: [2, 6] })),
+        ...SERVIDORES.map((s) => ({ de: 'lb', a: s, pasos: [2, 6] })),
+      ],
+    },
+
+    controles: [
+      { id: 'trafico', grupo: 'Tráfico', tipo: 'rango', etiqueta: 'Peticiones por segundo', min: 1, max: 14, valor: 3 },
+      { id: 'algoritmo', grupo: 'Balanceador', tipo: 'opciones', etiqueta: 'Algoritmo', valor: 'rr',
+        opciones: [['rr', 'Round robin'], ['least', 'Least connections'], ['random', 'Aleatorio'], ['sticky', 'Sticky']] },
+      { id: 'hc', grupo: 'Balanceador', tipo: 'interruptor', etiqueta: 'Health checks', valor: false },
+      { id: 'on_s1', grupo: 'Servidores', tipo: 'interruptor', etiqueta: 'Servidor 1 encendido', valor: true },
+      { id: 'on_s2', grupo: 'Servidores', tipo: 'interruptor', etiqueta: 'Servidor 2 encendido', valor: true },
+      { id: 'on_s3', grupo: 'Servidores', tipo: 'interruptor', etiqueta: 'Servidor 3 encendido', valor: true },
+      { id: 'lento', grupo: 'Servidores', tipo: 'interruptor', etiqueta: 'Servidor 1 lento (máquina vieja)', valor: false },
+      { id: 'reiniciar', grupo: 'Tráfico', tipo: 'boton', etiqueta: 'Reiniciar contadores' },
+    ],
+    contadores: [
+      { id: 'atendidas', etiqueta: 'Atendidas' },
+      { id: 'rechazadas', etiqueta: 'Rechazadas por saturación' },
+      { id: 'perdidas', etiqueta: 'Perdidas en un servidor caído' },
+    ],
+
+    al_cambiar(id, v, api) {
+      if (id === 'reiniciar') api.reiniciarContadores();
+      if (id === 'hc' && !v) SERVIDORES.forEach((s) => { S[s].sano = true; api.enlace('lb-' + s, 'normal'); });
+      if (id.startsWith('on_') && !v) { const s = S[id.slice(3)]; s.activos = []; s.fila = []; }
+    },
+    acciones_nodo(id, api) {
+      if (!SERVIDORES.includes(id) || !api.visible('lb')) return [];
+      const on = encendido(api, id);
+      return [{ texto: on ? 'Apagar este servidor' : 'Encenderlo', fn: () => api.fijar('on_' + id, !on) }];
+    },
+
+    iniciar(api) {
+      reiniciar(api);
+      // Health checks: cada 2 s el balanceador "pregunta" a cada servidor.
+      api.cada(2, () => {
+        if (!api.valor('hc') || !api.visible('lb')) return;
+        for (const id of SERVIDORES) {
+          api.enviar(['lb', id], 'ping', () => {
+            if (encendido(api, id)) api.enviar([id, 'lb'], 'ping', () => marcarSalud(api, id, true), { velocidad: 1.6 });
+            else api.despues(0.4, () => marcarSalud(api, id, false));
+          }, { velocidad: 1.6 });
+        }
+      });
+    },
+
+    tick(dt, api) {
+      S.avisoCiego -= dt;
+      const directo = api.paso === 1;
+      // Generar peticiones
+      S.acum += dt * api.valor('trafico');
+      while (S.acum >= 1) {
+        S.acum -= 1;
+        const cliente = CLIENTES[Math.floor(Math.random() * CLIENTES.length)];
+        if (directo) api.enviar([cliente, 's1'], 'peticion', (p) => llegaAlServidor('s1', p, api), { datos: { cliente, via: 'directo' } });
+        else api.enviar([cliente, 'lb'], 'peticion', (p) => llegaAlBalanceador(p, api), { datos: { cliente } });
+      }
+      // Atender
+      for (const id of SERVIDORES) {
+        const s = S[id], on = encendido(api, id);
+        for (let k = s.activos.length - 1; k >= 0; k--) {
+          const t = s.activos[k];
+          t.resta -= dt;
+          if (t.resta <= 0) {
+            s.activos.splice(k, 1);
+            const ruta = t.via === 'lb' ? [id, 'lb', t.cliente] : [id, t.cliente];
+            api.enviar(ruta, 'respuesta', () => api.contar('atendidas'), { velocidad: 1.3 });
+            if (s.fila.length) s.activos.push({ resta: ATENCION * (lento(api, id) ? 2.6 : 1), ...s.fila.shift() });
+          }
+        }
+        const carga = (s.activos.length + s.fila.length) / (CAPACIDAD + FILA_MAX);
+        api.medidor(id, on ? carga : 0);
+        api.estado(id, !on ? 'apagado' : s.fila.length ? 'alerta' : 'normal');
+        api.sub(id, !on ? 'apagado' : `${s.activos.length}/${CAPACIDAD} ocupado` + (s.fila.length ? ` · ${s.fila.length} en fila` : '') + (lento(api, id) ? ' · lento' : ''));
+      }
+      if (api.visible('lb')) {
+        const alg = api.valor('algoritmo');
+        api.sub('lb', alg === 'rr' ? `siguiente → ${nombre(SERVIDORES[S.rr])}` : { least: 'al menos ocupado', random: 'al azar', sticky: 'cada cliente a su servidor' }[alg]);
+      }
+    },
+
+    pasos: [
+      {
+        titulo: 'El problema: un solo servidor',
+        texto: 'Todas las peticiones llegan directo al <b>Servidor 1</b>. Puede atender 4 a la vez; las demás esperan en fila y, cuando la fila se llena, se <b>rechazan</b> (las × rojas).',
+        analogia: 'Un restaurante sin anfitrión: todos los clientes se sientan con el mismo mesero y los demás meseros miran.',
+        foco: ['s1'],
+        al_entrar(api) {
+          api.fijar('trafico', 4); api.fijar('hc', false); api.fijar('lento', false);
+          SERVIDORES.forEach((s) => api.fijar('on_' + s, true));
+          reiniciar(api);
+          api.despues(4, () => api.globo('s1', '¡No doy abasto!'));
+        },
+      },
+      {
+        titulo: 'Llega el balanceador',
+        texto: 'Ahora los clientes no hablan con un servidor: hablan con el <b>load balancer</b>, que es la única dirección pública. Él decide a qué servidor va cada petición y la respuesta vuelve por el mismo camino.',
+        analogia: 'El anfitrión recibe a todos en la puerta. Los clientes no eligen mesero: el anfitrión los lleva.',
+        foco: ['lb'],
+        al_entrar(api) {
+          api.fijar('algoritmo', 'rr'); api.fijar('hc', false); api.fijar('lento', false);
+          SERVIDORES.forEach((s) => api.fijar('on_' + s, true));
+          reiniciar(api);
+          api.despues(1.2, () => api.globo('lb', 'Pasen, yo los reparto'));
+        },
+      },
+      {
+        titulo: 'Round robin: por turnos',
+        texto: 'El algoritmo más simple es <b>round robin</b> (turno rotativo): una petición al Servidor 1, la siguiente al 2, luego al 3 y vuelta a empezar. Mira la etiqueta del balanceador: indica a quién le toca.',
+        analogia: 'El anfitrión sienta un cliente con cada mesero, en orden, sin mirar quién está más ocupado.',
+        foco: ['lb', 's1', 's2', 's3'],
+        al_entrar(api) {
+          api.fijar('algoritmo', 'rr'); api.fijar('hc', false); api.fijar('lento', false);
+          SERVIDORES.forEach((s) => api.fijar('on_' + s, true));
+          reiniciar(api);
+        },
+      },
+      {
+        titulo: 'Health checks: ¿sigues vivo?',
+        texto: 'Cada 2 segundos el balanceador envía un <b>health check</b> (los aros) a cada servidor. Si uno no responde, deja de mandarle tráfico. En unos segundos el Servidor 3 se va a caer: fíjate cómo su línea se vuelve punteada y el tráfico se reparte entre los otros dos.',
+        analogia: 'El anfitrión se asoma a cada rato: «¿puedes con otra mesa?». Si un mesero no contesta, deja de llevarle clientes.',
+        foco: ['lb', 's3'],
+        al_entrar(api) {
+          api.fijar('algoritmo', 'rr'); api.fijar('hc', true); api.fijar('lento', false);
+          SERVIDORES.forEach((s) => api.fijar('on_' + s, true));
+          reiniciar(api);
+          api.despues(3.5, () => { api.fijar('on_s3', false); api.aviso('El Servidor 3 se cayó'); });
+        },
+      },
+      {
+        titulo: 'Least connections: al menos ocupado',
+        texto: 'Ahora el Servidor 1 es <b>lento</b>. Con round robin seguiría recibiendo su turno y se saturaría. Con <b>least connections</b> el balanceador mira cuánto trabajo tiene cada uno y elige al más libre. Prueba a cambiar el algoritmo abajo y mira el relleno del Servidor 1.',
+        analogia: 'Un anfitrión atento no sienta clientes por turno: mira qué mesero tiene menos mesas y lleva ahí al siguiente.',
+        foco: ['s1', 'lb'],
+        al_entrar(api) {
+          api.fijar('algoritmo', 'least'); api.fijar('hc', true); api.fijar('lento', true); api.fijar('trafico', 4);
+          SERVIDORES.forEach((s) => api.fijar('on_' + s, true));
+          reiniciar(api);
+        },
+      },
+      {
+        titulo: 'Tu turno',
+        texto: 'Experimenta: sube el tráfico hasta que ni tres servidores den abasto; apaga un servidor <b>sin</b> health checks y mira las peticiones perdidas; prueba <b>Sticky</b> y observa que cada cliente vuelve siempre al mismo servidor. Toca un servidor para apagarlo.',
+        analogia: 'Ahora tú eres el gerente: decide cuántos clientes entran, qué meseros trabajan y cómo reparte el anfitrión.',
+        foco: [],
+        al_entrar() {},
+      },
+    ],
+  };
+})();
+
+</script>
+<script>
+/* explica-visual · motor
+   Lee window.CONCEPTO (ver references/motor-api.md) y monta:
+   escena isométrica, partículas, pasos con narración, tour automático,
+   intensidad del puntero, tema claro/oscuro, panel de juego y glosario. */
+(() => {
+  'use strict';
+  const C = window.CONCEPTO;
+  if (!C) { document.body.insertAdjacentHTML('afterbegin', '<p style="padding:16px">Falta window.CONCEPTO.</p>'); return; }
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const COS = Math.cos(Math.PI / 6), SIN = 0.5;
+  const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $ = (id) => document.getElementById(id);
+  const svg = $('escena');
+
+  function el(tag, attrs, padre) {
+    const n = document.createElementNS(NS, tag);
+    if (attrs) for (const k in attrs) if (attrs[k] != null) n.setAttribute(k, attrs[k]);
+    if (padre) padre.appendChild(n);
+    return n;
+  }
+  const pts = (arr) => arr.map((p) => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+
+  // ---- Proyección isométrica -------------------------------------------
+  // pos: [u, v] = desplazamiento en pantalla del centro de la base (u → derecha, v → abajo).
+  // Se convierte a coordenadas isométricas (x, y) para que las cajas se vean en 3D.
+  function uvAiso(u, v) { return [u / (2 * COS) + v, -u / (2 * COS) + v]; }
+  function iso(x, y, z) { return [(x - y) * COS, (x + y) * SIN - (z || 0)]; }
+
+  // ---- Estado ------------------------------------------------------------
+  const nodos = {};      // id → { def, g, lift, forma, x, y, h, centro, ancla, medidor(), ... }
+  const enlaces = {};    // id → { def, g, path }
+  const particulas = [];
+  const efectos = [];
+  const temporizadores = [];
+  const valores = {};
+  const contadores = {};
+  let paso = 0, reproduciendo = false, tiempoPaso = 0, intensidad = 0.6;
+  let puntero = null, punteroVirtual = null, seleccionado = null, tourIdx = 0, tourT = 0;
+  let ambito = 'global';
+
+  // ---- Capas ---------------------------------------------------------------
+  const raiz = el('g', { class: 'raiz' }, svg);
+  const capaPlanos = el('g', {}, raiz);
+  const capaEnlaces = el('g', {}, raiz);
+  const capaNodos = el('g', {}, raiz);
+  const capaParticulas = el('g', { 'aria-hidden': 'true' }, raiz);
+  const capaEfectos = el('g', { 'aria-hidden': 'true' }, raiz);
+
+  // ---- Formas --------------------------------------------------------------
+  function caja(n, g) {
+    const { x, y } = n, w = n.def.w || 60, d = n.def.d || w, h = n.def.h ?? 50;
+    const hw = w / 2, hd = d / 2;
+    const a = (dx, dy, z) => iso(x + dx, y + dy, z);
+    el('polygon', { class: 'trazo c-der', points: pts([a(hw, -hd, 0), a(hw, hd, 0), a(hw, hd, h), a(hw, -hd, h)]) }, g);
+    el('polygon', { class: 'trazo c-izq', points: pts([a(-hw, hd, 0), a(hw, hd, 0), a(hw, hd, h), a(-hw, hd, h)]) }, g);
+    const med1 = el('polygon', { class: 'medidor', points: '' }, g);
+    const med2 = el('polygon', { class: 'medidor', points: '' }, g);
+    el('polygon', { class: 'trazo c-sup', points: pts([a(-hw, -hd, h), a(hw, -hd, h), a(hw, hd, h), a(-hw, hd, h)]) }, g);
+    if (n.def.detalle === 'rack') {
+      for (let i = 1; i <= 3; i++) {
+        const z = h * i / 4;
+        el('polyline', { class: 'detalle', points: pts([a(-hw + 6, hd, z), a(hw - 6, hd, z)]) }, g);
+      }
+      const led = a(hw - 10, hd, h - 8);
+      n.led = el('circle', { cx: led[0], cy: led[1], r: 2, class: 'p-acento' }, g);
+    }
+    if (n.def.detalle === 'abierta') { // cubeta: tapa sin relleno
+      g.lastChild.setAttribute('class', 'trazo c-nada');
+    }
+    n.h = h; n.radioBase = (w + d) / 4;
+    n.medidor = (f) => {
+      const z = h * Math.max(0, Math.min(1, f));
+      if (z <= 0.01) { med1.setAttribute('points', ''); med2.setAttribute('points', ''); return; }
+      med1.setAttribute('points', pts([a(-hw, hd, 0), a(hw, hd, 0), a(hw, hd, z), a(-hw, hd, z)]));
+      med2.setAttribute('points', pts([a(hw, -hd, 0), a(hw, hd, 0), a(hw, hd, z), a(hw, -hd, z)]));
+    };
+  }
+
+  function cilindro(n, g) {
+    const r = n.def.r || 30, h = n.def.h ?? 50;
+    const rx = Math.SQRT2 * r * COS, ry = Math.SQRT2 * r * SIN;
+    const [bx, by] = iso(n.x, n.y, 0), ty = by - h;
+    const cuerpo = (top) => `M${bx - rx},${top} L${bx - rx},${by} A${rx},${ry} 0 0 0 ${bx + rx},${by} L${bx + rx},${top} A${rx},${ry} 0 0 1 ${bx - rx},${top} Z`;
+    el('path', { class: 'trazo c-izq', d: cuerpo(ty) }, g);
+    const med = el('path', { class: 'medidor', d: '' }, g);
+    const bandas = n.def.bandas || 0;
+    for (let i = 1; i <= bandas; i++) {
+      const yb = by - h * i / (bandas + 1);
+      el('path', { class: 'detalle', d: `M${bx - rx},${yb} A${rx},${ry} 0 0 0 ${bx + rx},${yb}` }, g);
+    }
+    el('ellipse', { class: 'trazo c-sup', cx: bx, cy: ty, rx, ry }, g);
+    n.h = h; n.radioBase = ry;
+    n.medidor = (f) => {
+      f = Math.max(0, Math.min(1, f));
+      med.setAttribute('d', f < 0.01 ? '' : cuerpo(by - h * f));
+    };
+  }
+
+  function persona(n, g) {
+    const r = n.def.r || 8, cuerpoH = r * 2.1;
+    const rx = Math.SQRT2 * r * COS, ry = Math.SQRT2 * r * SIN;
+    const [bx, by] = iso(n.x, n.y, 0), ty = by - cuerpoH;
+    el('path', { class: 'trazo c-izq', d: `M${bx - rx},${ty} L${bx - rx},${by} A${rx},${ry} 0 0 0 ${bx + rx},${by} L${bx + rx},${ty} A${rx},${ry} 0 0 1 ${bx - rx},${ty} Z` }, g);
+    el('ellipse', { class: 'trazo c-sup', cx: bx, cy: ty, rx, ry }, g);
+    el('circle', { class: 'trazo c-sup', cx: bx, cy: ty - r * 1.15, r: r * 0.85 }, g);
+    n.h = cuerpoH + r * 2; n.radioBase = ry;
+    n.medidor = () => {};
+  }
+
+  function cola(n, g) {
+    const k = n.def.slots || 5, t = n.def.w || 22, paso_ = n.def.separacion || t + 8, h = n.def.h ?? 14;
+    const celdas = [];
+    for (let i = 0; i < k; i++) {
+      const du = (i - (k - 1) / 2) * paso_;
+      const [cx, cy] = uvAiso(du, 0);
+      const x = n.x + cx, y = n.y + cy, hw = t / 2;
+      const a = (dx, dy, z) => iso(x + dx, y + dy, z);
+      const sg = el('g', {}, g);
+      el('polygon', { class: 'trazo c-der', points: pts([a(hw, -hw, 0), a(hw, hw, 0), a(hw, hw, h), a(hw, -hw, h)]) }, sg);
+      el('polygon', { class: 'trazo c-izq', points: pts([a(-hw, hw, 0), a(hw, hw, 0), a(hw, hw, h), a(-hw, hw, h)]) }, sg);
+      const top = el('polygon', { class: 'trazo c-sup', points: pts([a(-hw, -hw, h), a(hw, -hw, h), a(hw, hw, h), a(-hw, hw, h)]) }, sg);
+      celdas.push(sg);
+      void top;
+    }
+    n.h = h; n.radioBase = t / 2 + 4; n.anchoU = k * paso_;
+    // Los huecos se llenan desde la salida (derecha) hacia la entrada.
+    n.medidor = (f) => {
+      const llenos = Math.round(Math.max(0, Math.min(1, f)) * k);
+      celdas.forEach((c, i) => c.classList.toggle('lleno', k - 1 - i < llenos));
+      celdas.forEach((c) => c.querySelectorAll('polygon').forEach((p) => {
+        if (c.classList.contains('lleno')) p.classList.add('slot-lleno'); else p.classList.remove('slot-lleno');
+      }));
+    };
+  }
+
+  function plano(n, g) {
+    const w = n.def.w || 200, d = n.def.d || w, hw = w / 2, hd = d / 2;
+    const a = (dx, dy) => iso(n.x + dx, n.y + dy, 0);
+    el('polygon', { class: 'plano', points: pts([a(-hw, -hd), a(hw, -hd), a(hw, hd), a(-hw, hd)]) }, g);
+    n.h = 0; n.radioBase = (w + d) / 4; n.medidor = () => {};
+  }
+
+  const FORMAS = { caja, cilindro, persona, cola, plano };
+
+  // ---- Construcción de la escena ------------------------------------------
+  function construir() {
+    const lista = C.escena.nodos.map((def) => {
+      const [x, y] = uvAiso(def.pos[0], def.pos[1]);
+      return { def, x, y };
+    });
+    lista.sort((A, B) => (A.def.tipo === 'plano' ? -1 : 0) - (B.def.tipo === 'plano' ? -1 : 0) || (A.x + A.y) - (B.x + B.y));
+
+    for (const n of lista) {
+      const def = n.def;
+      const capa = def.tipo === 'plano' ? capaPlanos : capaNodos;
+      const g = el('g', { class: 'nodo', 'data-id': def.id }, capa);
+      if (def.tipo !== 'plano') {
+        g.setAttribute('tabindex', '0');
+        g.setAttribute('role', 'button');
+        g.setAttribute('aria-label', [def.etiqueta, def.analogia && '(' + def.analogia + ')'].filter(Boolean).join(' '));
+      }
+      const base = iso(n.x, n.y, 0);
+      n.sombra = el('ellipse', { class: 'sombra', cx: base[0], cy: base[1], rx: 1, ry: 1, opacity: 0 }, g);
+      n.lift = el('g', { class: 'lift' }, g);
+      const forma = el('g', { class: 'forma' }, n.lift);
+      (FORMAS[def.tipo] || caja)(n, forma);
+      n.g = g;
+      n.ancla = base;
+      n.centro = [base[0], base[1] - n.h / 2];
+      n.sombra.setAttribute('rx', n.radioBase * COS * 1.6);
+      n.sombra.setAttribute('ry', n.radioBase * 0.9);
+      n.liftAct = 0;
+      etiquetar(n, g);
+      g.addEventListener('pointerdown', (e) => { e.stopPropagation(); seleccionar(def.id, true); });
+      g.addEventListener('focus', () => seleccionar(def.id, false));
+      g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); seleccionar(def.id, true); } });
+      nodos[def.id] = n;
+      n.medidor(0);
+    }
+
+    for (const def of C.escena.enlaces || []) {
+      const id = def.id || def.de + '-' + def.a;
+      const A = nodos[def.de], B = nodos[def.a];
+      if (!A || !B) { console.warn('enlace con nodo inexistente', def); continue; }
+      const g = el('g', { class: 'enlace-g' }, capaEnlaces);
+      const path = el('line', { class: 'enlace', x1: A.ancla[0], y1: A.ancla[1], x2: B.ancla[0], y2: B.ancla[1] }, g);
+      enlaces[id] = { def, g, path };
+    }
+  }
+
+  function etiquetar(n, g) {
+    const def = n.def;
+    if (!def.etiqueta && !def.sub) return;
+    const lado = def.lado || 'abajo';
+    const [bx, by] = n.ancla;
+    let x = bx, y, anchor = 'middle';
+    const extU = n.anchoU ? n.anchoU / 2 : n.radioBase * 2 * COS;
+    if (lado === 'abajo') y = by + n.radioBase + 20;
+    else if (lado === 'arriba') y = by - n.h - n.radioBase - 14;
+    else if (lado === 'derecha') { x = bx + extU + 14; y = by - n.h / 2 + 4; anchor = 'start'; }
+    else { x = bx - extU - 14; y = by - n.h / 2 + 4; anchor = 'end'; }
+    if (def.tipo === 'plano') { y = by - n.radioBase - 10; }
+    const t = el('text', { x, y, 'text-anchor': anchor }, g);
+    t.textContent = def.etiqueta || '';
+    n.subEl = el('text', { x, y: y + 16, 'text-anchor': anchor, class: 'sub' }, g);
+    n.subEl.textContent = def.sub || '';
+  }
+
+  // Ajusta el viewBox al contenido y escala el texto para que siga legible en pantallas pequeñas.
+  let vb = { x: 0, y: 0, w: 960, h: 540 };
+  // Dos pasadas: el tamaño del texto depende del encuadre y el encuadre del texto.
+  function encuadrar() { encuadrarUnaVez(); encuadrarUnaVez(); }
+  function encuadrarUnaVez() {
+    capaParticulas.style.display = capaEfectos.style.display = 'none';
+    const b = raiz.getBBox();
+    capaParticulas.style.display = capaEfectos.style.display = '';
+    const m = C.lienzo?.margen ?? 36;
+    vb = { x: b.x - m, y: b.y - m - 46, w: b.width + m * 2, h: b.height + m * 2 + 46 };
+    const minW = C.lienzo?.anchoMin ?? 760;
+    if (vb.w < minW) { vb.x -= (minW - vb.w) / 2; vb.w = minW; }
+    svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+    reescalarTexto();
+  }
+  function reescalarTexto() {
+    const escala = svg.clientWidth / vb.w || 1;
+    const fs = Math.min(22, Math.max(13, 12 / escala));
+    svg.style.setProperty('--fs', fs.toFixed(1));
+  }
+
+  // ---- API para el concepto --------------------------------------------
+  const ESTILOS = {
+    peticion: { r: 4.5, clase: 'p-acento' },
+    respuesta: { r: 3.5, clase: 'p-tinta' },
+    ping: { r: 4, clase: 'p-aro' },
+    dato: { r: 4, clase: 'p-aro-tinta' },
+  };
+
+  const api = {
+    get paso() { return paso + 1; },
+    valor: (id) => valores[id],
+    // Cambia un control como si lo hiciera la persona: actualiza la UI y llama a al_cambiar.
+    fijar(id, v) {
+      const antes = valores[id]; valores[id] = v; sincronizarControl(id);
+      if (antes !== v) C.al_cambiar?.(id, v, api);
+    },
+    nodo: (id) => nodos[id],
+    visible: (id) => nodos[id] && !nodos[id].g.classList.contains('oculto'),
+
+    enviar(ruta, estilo, alLlegar, opciones) {
+      const ptsRuta = ruta.map((id) => nodos[id]?.ancla).filter(Boolean);
+      if (ptsRuta.length < 2) return null;
+      const est = typeof estilo === 'string' ? (ESTILOS[estilo] || ESTILOS.peticion) : { ...ESTILOS.peticion, ...estilo };
+      const jit = (Math.random() - 0.5) * 6;
+      const camino = ptsRuta.map((p) => [p[0], p[1] + jit]);
+      const largos = [];
+      let total = 0;
+      for (let i = 1; i < camino.length; i++) { const L = Math.hypot(camino[i][0] - camino[i - 1][0], camino[i][1] - camino[i - 1][1]); largos.push(L); total += L; }
+      const g = el('g', {}, capaParticulas);
+      el('circle', { r: est.r, class: 'particula ' + est.clase }, g);
+      if (opciones?.etiqueta) { const t = el('text', { x: 7, y: -6, class: 'p-etiqueta' }, g); t.textContent = opciones.etiqueta; }
+      const p = { camino, largos, total, d: 0, vel: (opciones?.velocidad || 1) * (C.velocidad || 190), g, alLlegar, datos: opciones?.datos, pos: camino[0].slice() };
+      particulas.push(p);
+      moverParticula(p);
+      return p;
+    },
+    limpiarParticulas() { particulas.splice(0).forEach((p) => p.g.remove()); },
+
+    medidor(id, f) { nodos[id]?.medidor(f); },
+    estado(id, e) {
+      const n = nodos[id]; if (!n) return;
+      n.g.classList.toggle('apagado', e === 'apagado');
+      n.g.classList.toggle('alerta', e === 'alerta');
+    },
+    sub(id, texto) { const n = nodos[id]; if (n?.subEl && n.subEl.textContent !== texto) n.subEl.textContent = texto; },
+    enlace(id, estado) {
+      const e = enlaces[id]; if (!e) return;
+      e.path.classList.toggle('roto', estado === 'roto');
+      e.path.classList.toggle('activo', estado === 'activo');
+    },
+
+    descartar(donde) {
+      const [x, y] = donde?.pos || donde;
+      const g = el('g', { transform: `translate(${x},${y})` }, capaEfectos);
+      el('path', { class: 'efecto-x', d: 'M-4,-4 L4,4 M4,-4 L-4,4' }, g);
+      efectos.push({ g, t: 0, dur: 0.9, tipo: 'caer', x, y });
+    },
+    pulso(id) {
+      const n = nodos[id]; if (!n) return;
+      const g = el('ellipse', { class: 'efecto-pulso', cx: n.ancla[0], cy: n.ancla[1], rx: 4, ry: 2 }, capaEfectos);
+      efectos.push({ g, t: 0, dur: 0.7, tipo: 'pulso', base: n.radioBase });
+    },
+    globo(id, texto, seg) {
+      const n = nodos[id]; if (!n) return;
+      n.globo?.g.remove();
+      const g = el('g', { class: 'globo' }, capaEfectos);
+      const t = el('text', { 'text-anchor': 'middle' }, g);
+      t.textContent = texto;
+      const fs = parseFloat(getComputedStyle(svg).getPropertyValue('--fs')) || 13;
+      const ancho = texto.length * fs * 0.52 + 20, alto = fs + 14;
+      const x = n.ancla[0], y = n.ancla[1] - n.h - n.radioBase - 22;
+      g.insertBefore(el('rect', { x: x - ancho / 2, y: y - alto + 4, width: ancho, height: alto, rx: alto / 2 }), t);
+      t.setAttribute('x', x); t.setAttribute('y', y - alto / 2 + fs * 0.35 + 4);
+      n.globo = { g, t: 0, dur: seg || 2.4, nodo: n };
+      efectos.push({ g, t: 0, dur: seg || 2.4, tipo: 'globo', nodo: n });
+    },
+    aviso(texto) {
+      const a = $('aviso');
+      a.textContent = texto; a.classList.add('visible');
+      clearTimeout(api._av); api._av = setTimeout(() => a.classList.remove('visible'), 2600);
+    },
+
+    contar(id, delta) { contadores[id] = (contadores[id] || 0) + (delta ?? 1); pintarContador(id); },
+    contador(id, v) { contadores[id] = v; pintarContador(id); },
+    reiniciarContadores() { for (const c of C.contadores || []) api.contador(c.id, 0); },
+
+    despues(seg, fn) { const t = { resta: seg, fn, ambito }; temporizadores.push(t); return t; },
+    cada(seg, fn) { const t = { resta: seg, cada: seg, fn, ambito }; temporizadores.push(t); return t; },
+    cancelar(t) { const i = temporizadores.indexOf(t); if (i >= 0) temporizadores.splice(i, 1); },
+    refrescarTarjeta() { if (seleccionado) seleccionar(seleccionado, true); },
+  };
+  window.EXPLICA = api; // útil para depurar desde la consola
+
+  function moverParticula(p) {
+    let d = p.d, i = 0;
+    while (i < p.largos.length - 1 && d > p.largos[i]) { d -= p.largos[i]; i++; }
+    const A = p.camino[i], B = p.camino[i + 1], f = p.largos[i] ? Math.min(1, d / p.largos[i]) : 1;
+    p.pos[0] = A[0] + (B[0] - A[0]) * f; p.pos[1] = A[1] + (B[1] - A[1]) * f;
+    p.g.setAttribute('transform', `translate(${p.pos[0].toFixed(1)},${p.pos[1].toFixed(1)})`);
+  }
+
+  // ---- Pasos --------------------------------------------------------------
+  function irAPaso(i, desdeTour) {
+    paso = Math.max(0, Math.min(C.pasos.length - 1, i));
+    const P = C.pasos[paso];
+    tiempoPaso = 0; tourIdx = 0; tourT = 0;
+    for (let k = temporizadores.length - 1; k >= 0; k--) if (temporizadores[k].ambito === 'paso') temporizadores.splice(k, 1);
+
+    const num = paso + 1;
+    for (const id in nodos) {
+      const r = nodos[id].def.pasos;
+      nodos[id].g.classList.toggle('oculto', !!r && (num < r[0] || num > r[1]));
+      nodos[id].g.classList.toggle('foco', (P.foco || []).includes(id));
+    }
+    for (const id in enlaces) {
+      const r = enlaces[id].def.pasos;
+      enlaces[id].g.classList.toggle('oculto', !!r && (num < r[0] || num > r[1]));
+    }
+
+    $('insignia').textContent = `Paso ${num} / ${C.pasos.length}`;
+    $('paso-titulo').textContent = P.titulo;
+    $('paso-texto').innerHTML = P.texto;
+    const chip = $('paso-analogia');
+    chip.innerHTML = P.analogia || ''; chip.hidden = !P.analogia;
+    $('anterior').disabled = paso === 0;
+    $('siguiente').disabled = paso === C.pasos.length - 1;
+    [...$('puntos').children].forEach((b, k) => { if (k === paso) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current'); });
+
+    ambito = 'paso';
+    try { P.al_entrar?.(api); } finally { ambito = 'global'; }
+    if (!desdeTour) cerrarTarjeta();
+  }
+
+  function duracionPaso(P) {
+    const texto = (P.titulo + ' ' + P.texto.replace(/<[^>]+>/g, '') + ' ' + (P.analogia || '')).length;
+    return P.duracion || Math.max(7, Math.min(16, texto * 0.055));
+  }
+
+  function alternarPlay(forzar) {
+    reproduciendo = forzar ?? !reproduciendo;
+    const b = $('play');
+    b.setAttribute('aria-pressed', String(reproduciendo));
+    b.textContent = reproduciendo ? '❚❚ Pausar' : '▶ Recorrer';
+    if (reproduciendo) {
+      if (paso === C.pasos.length - 1) irAPaso(0, true);
+      tiempoPaso = 0;
+    } else punteroVirtual = null;
+  }
+
+  // ---- Tarjeta de información -------------------------------------------
+  function seleccionar(id, fijo) {
+    const n = nodos[id]; if (!n || n.g.classList.contains('oculto')) return;
+    seleccionado = fijo ? id : seleccionado;
+    const d = n.def, t = $('tarjeta');
+    t.innerHTML = '';
+    const h = document.createElement('h3'); h.textContent = d.etiqueta || id; t.appendChild(h);
+    if (d.analogia) { const a = document.createElement('p'); a.className = 'ana'; a.textContent = 'En la analogía: ' + d.analogia; t.appendChild(a); }
+    if (d.descripcion) { const p = document.createElement('p'); p.innerHTML = d.descripcion; t.appendChild(p); }
+    const acciones = C.acciones_nodo?.(id, api) || [];
+    if (acciones.length) {
+      const fila = document.createElement('div'); fila.className = 'acciones';
+      for (const ac of acciones) {
+        const b = document.createElement('button'); b.className = 'btn'; b.type = 'button'; b.textContent = ac.texto;
+        b.addEventListener('click', (e) => { e.stopPropagation(); ac.fn(api); seleccionar(id, true); });
+        fila.appendChild(b);
+      }
+      t.appendChild(fila);
+    }
+    if (fijo) seleccionado = id;
+    mostrandoTarjeta = id;
+  }
+  let mostrandoTarjeta = null;
+  function cerrarTarjeta() {
+    seleccionado = null; mostrandoTarjeta = null;
+    $('tarjeta').innerHTML = '<p class="vacia">Toca o pasa el puntero sobre una pieza para ver qué es.</p>';
+  }
+
+  // ---- Controles del panel de juego --------------------------------------
+  const refs = {};
+  function construirControles() {
+    const cont = $('controles');
+    const grupos = new Map();
+    for (const c of C.controles || []) {
+      const gname = c.grupo || '';
+      if (!grupos.has(gname)) {
+        const g = document.createElement('div'); g.className = 'grupo';
+        if (gname) { const h = document.createElement('h3'); h.textContent = gname; g.appendChild(h); }
+        cont.appendChild(g); grupos.set(gname, g);
+      }
+      const g = grupos.get(gname);
+      const w = document.createElement('div'); w.className = 'control';
+      valores[c.id] = c.valor;
+      if (c.tipo === 'rango') {
+        w.innerHTML = `<div class="rotulo"><label for="c-${c.id}"></label><output></output></div><input type="range" id="c-${c.id}" min="${c.min}" max="${c.max}" step="${c.paso || 1}">`;
+        w.querySelector('label').textContent = c.etiqueta;
+        const inp = w.querySelector('input'), out = w.querySelector('output');
+        inp.value = c.valor;
+        inp.addEventListener('input', () => cambiar(c, Number(inp.value)));
+        refs[c.id] = () => { inp.value = valores[c.id]; out.textContent = (c.formato ? c.formato(valores[c.id]) : valores[c.id]); };
+      } else if (c.tipo === 'opciones') {
+        const l = document.createElement('div'); l.className = 'rotulo'; l.textContent = c.etiqueta; w.appendChild(l);
+        const s = document.createElement('div'); s.className = 'segmentos'; s.setAttribute('role', 'group'); s.setAttribute('aria-label', c.etiqueta);
+        const botones = c.opciones.map(([v, txt]) => {
+          const b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = txt;
+          b.addEventListener('click', () => cambiar(c, v)); s.appendChild(b); return [v, b];
+        });
+        w.appendChild(s);
+        refs[c.id] = () => botones.forEach(([v, b]) => b.setAttribute('aria-pressed', String(v === valores[c.id])));
+      } else if (c.tipo === 'interruptor') {
+        w.innerHTML = `<label class="interruptor"><input type="checkbox" role="switch"><span></span></label>`;
+        w.querySelector('span').textContent = c.etiqueta;
+        const inp = w.querySelector('input');
+        inp.addEventListener('change', () => cambiar(c, inp.checked));
+        refs[c.id] = () => { inp.checked = !!valores[c.id]; };
+      } else if (c.tipo === 'boton') {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = c.etiqueta;
+        b.addEventListener('click', () => { C.al_cambiar?.(c.id, true, api); });
+        w.appendChild(b); refs[c.id] = () => {};
+      }
+      g.appendChild(w);
+      refs[c.id]();
+    }
+    if (!(C.controles || []).length) $('juega').hidden = true;
+
+    const cc = $('contadores');
+    for (const c of C.contadores || []) {
+      const d = document.createElement('div'); d.className = 'contador';
+      d.innerHTML = '<b>0</b><span></span>'; d.querySelector('span').textContent = c.etiqueta;
+      cc.appendChild(d); c._el = d.querySelector('b'); contadores[c.id] = 0;
+    }
+  }
+  function cambiar(c, v) { valores[c.id] = v; refs[c.id](); C.al_cambiar?.(c.id, v, api); api.refrescarTarjeta(); }
+  function sincronizarControl(id) { refs[id]?.(); }
+  function pintarContador(id) { const c = (C.contadores || []).find((k) => k.id === id); if (c?._el) c._el.textContent = contadores[id]; }
+
+  // ---- Glosario ----------------------------------------------------------
+  function construirGlosario() {
+    const g = $('glosario');
+    const mapa = C.analogia?.mapa || [];
+    if (mapa.length) {
+      const s = document.createElement('div');
+      s.innerHTML = `<h2>La analogía, pieza por pieza</h2><table class="mapa"><thead><tr><th></th><th></th></tr></thead><tbody></tbody></table>`;
+      const [ca, cb] = C.analogia.columnas || ['En la analogía', 'En el sistema'];
+      s.querySelectorAll('th')[0].textContent = ca; s.querySelectorAll('th')[1].textContent = cb;
+      const tb = s.querySelector('tbody');
+      for (const [a, b] of mapa) { const tr = document.createElement('tr'); tr.innerHTML = '<td></td><td></td>'; tr.children[0].textContent = a; tr.children[1].textContent = b; tb.appendChild(tr); }
+      g.appendChild(s);
+    }
+    if ((C.terminos || []).length) {
+      const s = document.createElement('div');
+      s.innerHTML = '<h2>Términos clave</h2><dl class="terminos"></dl>';
+      const dl = s.querySelector('dl');
+      for (const t of C.terminos) {
+        const dt = document.createElement('dt'); dt.textContent = t.termino;
+        if (t.traduccion) { const sm = document.createElement('small'); sm.textContent = ' · ' + t.traduccion; dt.appendChild(sm); }
+        const dd = document.createElement('dd'); dd.textContent = t.definicion;
+        dl.append(dt, dd);
+      }
+      g.appendChild(s);
+    }
+    if (!g.children.length) g.hidden = true;
+  }
+
+  // ---- Puntero e intensidad ----------------------------------------------
+  function aSvg(e) {
+    const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY;
+    const m = svg.getScreenCTM(); if (!m) return null;
+    const q = p.matrixTransform(m.inverse()); return [q.x, q.y];
+  }
+  svg.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') puntero = aSvg(e); });
+  svg.addEventListener('pointerleave', () => { puntero = null; });
+  svg.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') puntero = aSvg(e); cerrarTarjeta(); });
+
+  function actualizarLift(dt) {
+    const fuente = puntero || punteroVirtual;
+    const R = 120, amp = 16 * intensidad;
+    let mejor = null, mejorF = 0;
+    for (const id in nodos) {
+      const n = nodos[id];
+      if (n.def.tipo === 'plano') continue;
+      let f = 0;
+      if (fuente) { const dd = Math.hypot(fuente[0] - n.centro[0], fuente[1] - n.centro[1]); f = Math.exp(-((dd / R) ** 2)); }
+      if (seleccionado === id) f = Math.max(f, 1);
+      if (n.g.classList.contains('foco')) f = Math.max(f, 0.35);
+      if (f > mejorF) { mejorF = f; mejor = id; }
+      const objetivo = -amp * f;
+      n.liftAct += (objetivo - n.liftAct) * Math.min(1, dt * (reducido ? 30 : 10));
+      n.lift.setAttribute('transform', `translate(0,${n.liftAct.toFixed(2)})`);
+      n.sombra.setAttribute('opacity', (Math.min(1, -n.liftAct / 16) * 0.8).toFixed(2));
+    }
+    for (const id in nodos) nodos[id].g.classList.toggle('resaltado', id === mejor && mejorF > 0.55 && intensidad > 0);
+    // Muestra la tarjeta de lo que está bajo el puntero si no hay nada fijado.
+    if (!seleccionado && puntero && mejor && mejorF > 0.7 && mostrandoTarjeta !== mejor) seleccionar(mejor, false);
+    else if (!seleccionado && puntero && mejorF < 0.4 && mostrandoTarjeta) cerrarTarjeta();
+  }
+
+  function actualizarTour(dt) {
+    if (!reproduciendo || puntero) return;
+    const foco = (C.pasos[paso].foco || []).filter((id) => api.visible(id));
+    if (!foco.length) { punteroVirtual = null; return; }
+    tourT += dt;
+    if (tourT > 1.6) { tourT = 0; tourIdx = (tourIdx + 1) % foco.length; }
+    const objetivo = nodos[foco[tourIdx % foco.length]].centro;
+    if (!punteroVirtual) punteroVirtual = objetivo.slice();
+    punteroVirtual[0] += (objetivo[0] - punteroVirtual[0]) * Math.min(1, dt * 4);
+    punteroVirtual[1] += (objetivo[1] - punteroVirtual[1]) * Math.min(1, dt * 4);
+  }
+
+  // ---- Bucle -------------------------------------------------------------
+  let ultimo = performance.now();
+  function bucle(ahora) {
+    const dt = Math.min(0.05, (ahora - ultimo) / 1000); ultimo = ahora;
+    avanzar(dt);
+    requestAnimationFrame(bucle);
+  }
+  // Avanza la simulación sin esperar fotogramas: EXPLICA.simular(10) corre 10 s simulados.
+  // Sirve para verificar el diagrama aunque la pestaña esté en segundo plano.
+  api.simular = (seg) => { for (let t = 0; t < seg; t += 1 / 30) avanzar(1 / 30); };
+
+  function avanzar(dt) {
+    for (let k = temporizadores.length - 1; k >= 0; k--) {
+      const t = temporizadores[k]; if (!t) continue;
+      t.resta -= dt;
+      if (t.resta <= 0) {
+        if (t.cada) t.resta += t.cada; else temporizadores.splice(k, 1);
+        t.fn(api);
+      }
+    }
+    C.tick?.(dt, api);
+
+    for (let k = particulas.length - 1; k >= 0; k--) {
+      const p = particulas[k];
+      p.d += p.vel * dt;
+      if (p.d >= p.total) {
+        p.d = p.total; moverParticula(p);
+        particulas.splice(k, 1); p.g.remove();
+        p.alLlegar?.(p, api);
+      } else moverParticula(p);
+    }
+
+    for (let k = efectos.length - 1; k >= 0; k--) {
+      const e = efectos[k]; e.t += dt; const f = e.t / e.dur;
+      if (f >= 1) { e.g.remove(); efectos.splice(k, 1); if (e.nodo && e.nodo.globo?.g === e.g) e.nodo.globo = null; continue; }
+      if (e.tipo === 'caer') { e.g.setAttribute('transform', `translate(${e.x},${e.y + f * 16})`); e.g.setAttribute('opacity', 1 - f); }
+      if (e.tipo === 'pulso') { const r = 4 + f * e.base * 2.2; e.g.setAttribute('rx', r * COS * 1.4); e.g.setAttribute('ry', r * 0.7); e.g.setAttribute('opacity', 1 - f); }
+      if (e.tipo === 'globo') {
+        const lift = e.nodo.liftAct || 0;
+        e.g.setAttribute('transform', `translate(0,${lift.toFixed(1)})`);
+        e.g.setAttribute('opacity', f > 0.85 ? (1 - f) / 0.15 : Math.min(1, f * 8));
+      }
+    }
+
+    actualizarTour(dt);
+    actualizarLift(dt);
+
+    if (reproduciendo) {
+      tiempoPaso += dt;
+      if (tiempoPaso > duracionPaso(C.pasos[paso])) {
+        if (paso < C.pasos.length - 1) irAPaso(paso + 1, true); else alternarPlay(false);
+      }
+    }
+  }
+
+  // ---- Tema --------------------------------------------------------------
+  function temaActual() {
+    const t = document.documentElement.getAttribute('data-theme');
+    if (t) return t;
+    return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  try { const t = localStorage.getItem('explica-visual-tema'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (_) {}
+  $('tema').addEventListener('click', () => {
+    const nuevo = temaActual() === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', nuevo);
+    try { localStorage.setItem('explica-visual-tema', nuevo); } catch (_) {}
+  });
+
+  // ---- Arranque ----------------------------------------------------------
+  document.title = C.titulo + ' · explica-visual';
+  $('titulo').textContent = C.titulo;
+  $('kicker').textContent = 'explica-visual' + (C.contexto ? ' · ' + C.contexto : '');
+  $('frase').textContent = C.frase || '';
+  $('analogia-linea').textContent = C.analogia?.texto || '';
+
+  const intens = $('intensidad');
+  intens.addEventListener('input', () => { intensidad = intens.value / 100; });
+
+  C.pasos.forEach((P, k) => {
+    const b = document.createElement('button'); b.type = 'button';
+    b.setAttribute('aria-label', `Paso ${k + 1}: ${P.titulo}`);
+    b.addEventListener('click', () => { alternarPlay(false); irAPaso(k); });
+    $('puntos').appendChild(b);
+  });
+  $('anterior').addEventListener('click', () => { alternarPlay(false); irAPaso(paso - 1); });
+  $('siguiente').addEventListener('click', () => { alternarPlay(false); irAPaso(paso + 1); });
+  $('play').addEventListener('click', () => alternarPlay());
+  document.addEventListener('keydown', (e) => {
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || (tag === 'button' && e.key === ' ')) return;
+    if (e.key === 'ArrowRight') { alternarPlay(false); irAPaso(paso + 1); }
+    else if (e.key === 'ArrowLeft') { alternarPlay(false); irAPaso(paso - 1); }
+    else if (e.key === ' ' && !e.target.closest?.('.nodo')) { e.preventDefault(); alternarPlay(); }
+    else if (e.key === 'Escape') cerrarTarjeta();
+  });
+
+  construir();
+  construirControles();
+  construirGlosario();
+  encuadrar();
+  let tResize; addEventListener('resize', () => { clearTimeout(tResize); tResize = setTimeout(encuadrar, 120); });
+  C.iniciar?.(api);
+  irAPaso(0);
+  requestAnimationFrame((t) => { ultimo = t; requestAnimationFrame(bucle); });
+})();
+
+</script>
+</body>
+</html>
